@@ -1,10 +1,10 @@
 #! /usr/bin/env python3
 from sys import stdin
+from string import ascii_lowercase
 from typing import Iterable, Iterator, List
 
 
 ROW_LENGTH: int = 1000
-CHARS: str = 'abcdefghijklmnopqrstuvwxyz'
 
 
 class WordSearch(object):
@@ -24,14 +24,21 @@ class WordSearch(object):
 def read_grid() -> str:
     words: Iterable[str] = map(lambda x: x.lower(), stdin.readlines())
     filtered_words: Iterator[str] = (
-        ''.join(filter(lambda x: x in CHAR, word))
+        ''.join(filter(lambda x: x in ascii_lowercase, word))
         for word in words
     )
     return ''.join(filtered_words)
 
 
+def test_grid() -> str:
+    from random import choice
+
+    return ''.join(choice(ascii_lowercase) for i in range(ROW_LENGTH*ROW_LENGTH))
+
+
 if __name__ == "__main__":
-    grid: str = read_grid()
+    grid: str = test_grid()
+    # grid: str = read_grid()
     ws: WordSearch = WordSearch(grid)
 
     # for word in words_to_find:
