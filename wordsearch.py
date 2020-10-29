@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 from sys import stdin
-from typing import Iterable, List
+from typing import Iterable, Iterator, List
 
 
 ROW_LENGTH: int = 1000
@@ -10,7 +10,7 @@ CHARS: str = 'abcdefghijklmnopqrstuvwxyz'
 class WordSearch(object):
 
     def __init__(self, grid: str) -> None:
-        self.grid = [
+        self.grid: List[str] = [
             grid[ROW_LENGTH*i:ROW_LENGTH*(i+1)]
             for i in range(ROW_LENGTH)
         ]
@@ -23,10 +23,10 @@ class WordSearch(object):
 
 def read_grid() -> str:
     words: Iterable[str] = map(lambda x: x.lower(), stdin.readlines())
-    filtered_words: List[str] = [
-        ''.join(filter(lambda x: x in CHARS, word))
+    filtered_words: Iterator[str] = (
+        ''.join(filter(lambda x: x in CHAR, word))
         for word in words
-    ]
+    )
     return ''.join(filtered_words)
 
 
