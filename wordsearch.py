@@ -3,14 +3,19 @@ from sys import stdin
 from typing import Iterable, List
 
 
-ROW_LENGTH: int = 10000
+ROW_LENGTH: int = 1000
 CHARS: str = 'abcdefghijklmnopqrstuvwxyz'
 
 
 class WordSearch(object):
 
     def __init__(self, grid: str) -> None:
-        pass
+        self.grid = [
+            grid[ROW_LENGTH*i:ROW_LENGTH*(i+1)]
+            for i in range(ROW_LENGTH)
+        ]
+        if len(self.grid[-1]) != ROW_LENGTH:
+            raise RuntimeError("Not enough words!")
 
     def is_present(self, word: str) -> bool:
         return True
