@@ -25,7 +25,14 @@ class WordSearch(object):
             for column in zip(*self._rows)
         ]
     def is_present(self, word: str) -> bool:
+        for index in range(self._axis_length):
+            if word in self._rows[index]:
+                print(index)
+                return True
+            elif word in self._columns[index]:
+                print(index)
         return True
+        return False
 
 
 def read_grid(path: str) -> str:
@@ -75,6 +82,6 @@ if __name__ == "__main__":
 
     ws: WordSearch = WordSearch(grid)
 
-    # for word in words_to_find:
-    #     if ws.is_present(word):
-    #         print "found {}".format(word)
+    for word in words_to_find:
+        if ws.is_present(word):
+            print("found {}".format(word))
