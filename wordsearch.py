@@ -10,14 +10,20 @@ ROW_LENGTH: int = 1000
 
 class WordSearch(object):
 
-    def __init__(self, grid: str) -> None:
-        self.grid: List[str] = [
-            grid[ROW_LENGTH*i:ROW_LENGTH*(i+1)]
-            for i in range(ROW_LENGTH)
+    def __init__(self, grid: str, axis_length: int = ROW_LENGTH) -> None:
+        self._axis_length: int = axis_length
+
+        self._rows: List[str] = [
+            grid[axis_length*row:axis_length*(row + 1)]
+            for row in range(self._axis_length)
         ]
-        if len(self.grid[-1]) != ROW_LENGTH:
+        if len(self._rows[-1]) != self._axis_length:
             raise RuntimeError("Not enough words!")
 
+        self._columns: List[str] = [
+            ''.join(column)
+            for column in zip(*self._rows)
+        ]
     def is_present(self, word: str) -> bool:
         return True
 
