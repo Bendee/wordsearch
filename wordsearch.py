@@ -1,7 +1,8 @@
 #! /usr/bin/env python3
-from sys import stdin
+from sys import argv
+from getopt import getopt, GetoptError
 from string import ascii_lowercase
-from typing import Iterable, Iterator, List
+from typing import List
 
 
 ROW_LENGTH: int = 1000
@@ -21,13 +22,22 @@ class WordSearch(object):
         return True
 
 
-def read_grid() -> str:
-    words: Iterable[str] = map(lambda x: x.lower(), stdin.readlines())
-    filtered_words: Iterator[str] = (
-        ''.join(filter(lambda x: x in ascii_lowercase, word))
-        for word in words
-    )
-    return ''.join(filtered_words)
+def read_grid(path: str) -> str:
+    grid: str = ''
+    with open(path, "r") as file:
+        for line in file:
+            grid += ''.join(filter(lambda x: x in ascii_lowercase, line))
+
+    return grid
+
+def read_words(path: str) -> List[str]:
+    words: List[str] = []
+
+    with open(path, "r") as file:
+        for line in file:
+            words.append(line.strip())
+
+    return words
 
 
 def test_grid() -> str:
@@ -37,8 +47,26 @@ def test_grid() -> str:
 
 
 if __name__ == "__main__":
-    grid: str = test_grid()
-    # grid: str = read_grid()
+    debug: bool = False
+    try:
+        options, args = getopt(argv[1:], 'hd', ['grid=', 'words='])
+    except GetoptError as e:
+        raise RuntimeError from e
+    if len(options) == 0:
+        raise RuntimeError
+    for option, argument in options:
+        if option == '-h':
+            pass
+            exit()
+        elif option == '-d':
+            debug = True
+            grid: str = test_grid()
+        elif option == '--grid':
+            grid: str = read_grid(argument)
+
+        if option  == '--words':
+            words_to_find: List[str] = read_words(argument)
+
     ws: WordSearch = WordSearch(grid)
 
     # for word in words_to_find:
