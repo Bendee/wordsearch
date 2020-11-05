@@ -2,7 +2,7 @@
 from sys import argv
 from getopt import getopt, GetoptError
 from string import ascii_lowercase
-from typing import List
+from typing import Dict, List
 
 
 ROW_LENGTH: int = 1000
@@ -10,17 +10,36 @@ ROW_LENGTH: int = 1000
 
 class WordSearch(object):
 
-    def __init__(self, grid: str) -> None:
-        self.grid: List[str] = [
-            grid[ROW_LENGTH*i:ROW_LENGTH*(i+1)]
-            for i in range(ROW_LENGTH)
-        ]
-        if len(self.grid[-1]) != ROW_LENGTH:
+    def __init__(self, grid: str, axis_length: int = ROW_LENGTH) -> None:
+        self._axis_length: int = axis_length
+        self._present: Dict[str, bool] = {}
+
+        if len(grid) != self._axis_length**2:
             raise RuntimeError("Not enough words!")
 
-    def is_present(self, word: str) -> bool:
-        return True
+        self._rows: List[str] = [
+            grid[self._axis_length*row:self._axis_length*(row + 1)]
+            for row in range(self._axis_length)
+        ]
 
+        self._columns: List[str] = [
+            ''.join(column)
+            for column in zip(*self._rows)
+
+    def _is_present(self, word: str) -> bool:
+        for row, column in zip(self._rows, self._columns):
+            if word in row:
+                return True
+            elif word in column:
+                return True
+        return False
+
+    def is_present(self, word: str) -> bool:
+        if word not in self._present:
+            present = self._is_present(word)
+            self._present[word] = present
+
+        return self._present[word]
 
 def read_grid(path: str) -> str:
     grid: str = ''
@@ -69,6 +88,6 @@ if __name__ == "__main__":
 
     ws: WordSearch = WordSearch(grid)
 
-    # for word in words_to_find:
-    #     if ws.is_present(word):
-    #         print "found {}".format(word)
+    for word in words_to_find:
+        if ws.is_present(word):
+            print("found {}".format(word))
