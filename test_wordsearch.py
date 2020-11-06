@@ -7,7 +7,7 @@ from pytest import mark
 from wordsearch import WordSearch, read_grid
 
 
-NEW_GRID = False
+NEW_GRID: bool = False
 GRID_FILE: str = 'grid.txt'
 WORD_FILE: str = 'words.txt'
 AXIS_LENGTH: int = 10000
@@ -69,12 +69,12 @@ def test__generate_columns(benchmark):
 
 
 @mark.parametrize("word, expected", WORDS.items())
-def test_is_present(benchmark, word, expected):
-    result = benchmark(WS.is_present, word=word)
+def test_is_present(benchmark, word: str, expected: bool):
+    result: bool = benchmark(WS.is_present, word=word)
     assert result == expected
 
 
 @mark.parametrize("word, expected", WORDS.items())
-def test__is_present(benchmark, word, expected):
-    result = benchmark(WS._is_present, word=word)
+def test__is_present(benchmark, word: str, expected: bool):
+    result: bool = benchmark(WS._is_present, word=word)
     assert result == expected
