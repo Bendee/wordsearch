@@ -68,9 +68,8 @@ def read_words(path: str) -> List[str]:
 
 
 if __name__ == "__main__":
-    debug: bool = False
     try:
-        options, args = getopt(argv[1:], 'hd', ['grid=', 'words='])
+        options, args = getopt(argv[1:], 'h', ['grid=', 'words='])
     except GetoptError as e:
         raise RuntimeError from e
     if len(options) == 0:
@@ -79,9 +78,6 @@ if __name__ == "__main__":
         if option == '-h':
             pass
             exit()
-        elif option == '-d':
-            debug = True
-            grid: str = test_grid()
         elif option == '--grid':
             grid: str = read_grid(argument)
 
