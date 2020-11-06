@@ -12,7 +12,7 @@ class WordSearch(object):
 
     def __init__(self, grid: str, axis_length: int = ROW_LENGTH) -> None:
         self._axis_length: int = axis_length
-        self._present: Dict[str, bool] = {}
+        self._cache: Dict[str, bool] = {}
 
         if len(grid) != self._axis_length**2:
             raise RuntimeError("Not enough words!")
@@ -41,11 +41,11 @@ class WordSearch(object):
         return False
 
     def is_present(self, word: str) -> bool:
-        if word not in self._present:
+        if word not in self._cache:
             present = self._is_present(word)
-            self._present[word] = present
+            self._cache[word] = present
 
-        return self._present[word]
+        return self._cache[word]
 
 
 def read_grid(path: str) -> str:
