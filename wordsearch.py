@@ -5,7 +5,7 @@ from string import ascii_lowercase
 from typing import Dict, List
 
 
-ROW_LENGTH: int = 1000
+ROW_LENGTH: int = 10000
 
 
 class WordSearch(object):
