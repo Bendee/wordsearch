@@ -1,6 +1,6 @@
-from random import choice, randrange, sample
+from random import choice, randrange, sample, shuffle
 from string import ascii_lowercase
-from typing import Dict
+from typing import Dict, List
 
 from pytest import mark
 
@@ -9,6 +9,7 @@ from wordsearch import WordSearch, read_grid
 
 NEW_GRID = False
 GRID_FILE: str = 'grid.txt'
+WORD_FILE: str = 'words.txt'
 AXIS_LENGTH: int = 10000
 
 
@@ -19,6 +20,14 @@ def create_test_grid() -> None:
                 choice(ascii_lowercase)
                 for j in range(AXIS_LENGTH)
             ) + '\n')
+
+
+def write_words(words: List[str]) -> None:
+    words.extend(sample(words, len(words)//3))
+    shuffle(words)
+    with open(WORD_FILE, 'w') as f:
+        for word in words:
+            f.write(word + '\n')
 
 
 def get_words(amount: int = 100) -> Dict[str, bool]:
@@ -42,6 +51,9 @@ if NEW_GRID:
 GRID: str = read_grid(GRID_FILE)
 WS: WordSearch = WordSearch(GRID, AXIS_LENGTH)
 WORDS: Dict[str, bool] = get_words()
+
+if NEW_GRID:
+    write_words(list(get_words(400).keys()))
 
 
 def test_read_grid(benchmark):
