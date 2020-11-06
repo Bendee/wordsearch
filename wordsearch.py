@@ -59,12 +59,6 @@ def read_words(path: str) -> List[str]:
     return words
 
 
-def test_grid() -> str:
-    from random import choice
-
-    return ''.join(choice(ascii_lowercase) for i in range(ROW_LENGTH*ROW_LENGTH))
-
-
 if __name__ == "__main__":
     debug: bool = False
     try:
