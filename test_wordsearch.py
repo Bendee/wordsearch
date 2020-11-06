@@ -1,7 +1,7 @@
 from random import choice
 from string import ascii_lowercase
 
-from wordsearch import read_grid
+from wordsearch import WordSearch, read_grid
 
 
 NEW_GRID = False
@@ -21,6 +21,17 @@ def create_test_grid() -> None:
 if NEW_GRID:
     create_test_grid()
 
+GRID: str = read_grid(GRID_FILE)
+WS: WordSearch = WordSearch(GRID, AXIS_LENGTH)
+
 
 def test_read_grid(benchmark):
     benchmark(read_grid, path=GRID_FILE)
+
+
+def test__generate_rows(benchmark):
+    benchmark(WS._generate_rows, grid=GRID)
+
+
+def test__generate_columns(benchmark):
+    benchmark(WS._generate_columns)

@@ -17,17 +17,23 @@ class WordSearch(object):
         if len(grid) != self._axis_length**2:
             raise RuntimeError("Not enough words!")
 
-        self._rows: List[str] = [
+        self.rows: List[str] = self._generate_rows(grid)
+        self.columns: List[str] = self._generate_columns()
+
+    def _generate_rows(self, grid: str) -> List[str]:
+        return [
             grid[self._axis_length*row:self._axis_length*(row + 1)]
             for row in range(self._axis_length)
         ]
 
-        self._columns: List[str] = [
+    def _generate_columns(self) -> List[str]:
+        return [
             ''.join(column)
-            for column in zip(*self._rows)
+            for column in zip(*self.rows)
+        ]
 
     def _is_present(self, word: str) -> bool:
-        for row, column in zip(self._rows, self._columns):
+        for row, column in zip(self.rows, self.columns):
             if word in row:
                 return True
             elif word in column:
