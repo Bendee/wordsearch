@@ -5,7 +5,7 @@ from string import ascii_lowercase
 from typing import Dict, List
 
 
-ROW_LENGTH: int = 1000
+ROW_LENGTH: int = 10000
 
 
 class WordSearch(object):
@@ -47,6 +47,7 @@ class WordSearch(object):
 
         return self._present[word]
 
+
 def read_grid(path: str) -> str:
     grid: str = ''
     with open(path, "r") as file:
@@ -54,6 +55,7 @@ def read_grid(path: str) -> str:
             grid += ''.join(filter(lambda x: x in ascii_lowercase, line))
 
     return grid
+
 
 def read_words(path: str) -> List[str]:
     words: List[str] = []
