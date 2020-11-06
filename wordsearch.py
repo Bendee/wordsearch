@@ -25,6 +25,7 @@ class WordSearch(object):
         self._columns: List[str] = [
             ''.join(column)
             for column in zip(*self._rows)
+        ]
 
     def _is_present(self, word: str) -> bool:
         for row, column in zip(self._rows, self._columns):
@@ -41,6 +42,7 @@ class WordSearch(object):
 
         return self._present[word]
 
+
 def read_grid(path: str) -> str:
     grid: str = ''
     with open(path, "r") as file:
@@ -48,6 +50,7 @@ def read_grid(path: str) -> str:
             grid += ''.join(filter(lambda x: x in ascii_lowercase, line))
 
     return grid
+
 
 def read_words(path: str) -> List[str]:
     words: List[str] = []
