@@ -1,6 +1,8 @@
 from random import choice
 from string import ascii_lowercase
 
+from wordsearch import read_grid
+
 
 NEW_GRID = False
 GRID_FILE: str = 'grid.txt'
@@ -18,3 +20,7 @@ def create_test_grid() -> None:
 
 if NEW_GRID:
     create_test_grid()
+
+
+def test_read_grid(benchmark):
+    benchmark(read_grid, path=GRID_FILE)
