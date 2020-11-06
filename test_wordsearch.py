@@ -1,3 +1,4 @@
+from pathlib import Path
 from random import choice, randrange, sample, shuffle
 from string import ascii_lowercase
 from typing import Dict, List
@@ -6,10 +7,9 @@ from pytest import mark
 
 from wordsearch import WordSearch, read_grid
 
-
-NEW_GRID: bool = False
 GRID_FILE: str = 'grid.txt'
 WORD_FILE: str = 'words.txt'
+NEW_GRID: bool = not Path(GRID_FILE).exists()
 AXIS_LENGTH: int = 10000
 
 
