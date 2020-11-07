@@ -5,20 +5,20 @@ from string import ascii_lowercase
 from typing import Dict, List
 
 
-ROW_LENGTH: int = 10000
+ROW_LENGTH = 10000  # type: int
 
 
 class WordSearch(object):
 
     def __init__(self, grid: str, axis_length: int = ROW_LENGTH) -> None:
-        self._axis_length: int = axis_length
-        self._cache: Dict[str, bool] = {}
+        self._axis_length = axis_length  # type: int
+        self._cache = {}  # type: Dict[str, bool]
 
         if len(grid) != self._axis_length**2:
             raise RuntimeError("Not enough words!")
 
-        self.rows: List[str] = self._generate_rows(grid)
-        self.columns: List[str] = self._generate_columns()
+        self.rows = self._generate_rows(grid)  # type: List[str]
+        self.columns = self._generate_columns()  # type: List[str]
 
     def _generate_rows(self, grid: str) -> List[str]:
         return [
@@ -49,7 +49,7 @@ class WordSearch(object):
 
 
 def read_grid(path: str) -> str:
-    grid: str = ''
+    grid = ''  # type: str
     with open(path, "r") as file:
         for line in file:
             grid += ''.join(filter(lambda x: x in ascii_lowercase, line))
@@ -58,7 +58,7 @@ def read_grid(path: str) -> str:
 
 
 def read_words(path: str) -> List[str]:
-    words: List[str] = []
+    words = []  # type: List[str]
 
     with open(path, "r") as file:
         for line in file:
@@ -79,12 +79,12 @@ if __name__ == "__main__":
             pass
             exit()
         elif option == '--grid':
-            grid: str = read_grid(argument)
+            grid = read_grid(argument)  # type: str
 
         if option  == '--words':
-            words_to_find: List[str] = read_words(argument)
+            words_to_find = read_words(argument)  # type: List[str]
 
-    ws: WordSearch = WordSearch(grid)
+    ws = WordSearch(grid)  # type: WordSearch
 
     for word in words_to_find:
         if ws.is_present(word):
