@@ -1,8 +1,14 @@
 #! /usr/bin/env python3
+# CLI Arguments
 from sys import argv
 from getopt import getopt, GetoptError
+
 from string import ascii_lowercase
-from typing import Dict, List
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from typing import Dict, List
 
 
 ROW_LENGTH = 10000  # type: int
@@ -20,14 +26,14 @@ class WordSearch(object):
         self.rows = self._generate_rows(grid)  # type: List[str]
         self.columns = self._generate_columns()  # type: List[str]
 
-    def _generate_rows(self, grid: str) -> List[str]:
+    def _generate_rows(self, grid: str) -> 'List[str]':
         """ Split grid into rows. """
         return [
             grid[self._axis_length*row:self._axis_length*(row + 1)]
             for row in range(self._axis_length)
         ]
 
-    def _generate_columns(self) -> List[str]:
+    def _generate_columns(self) -> 'List[str]':
         """ Transpose rows to get columns. """
         return [
             ''.join(column)
@@ -62,7 +68,7 @@ def read_grid(path: str) -> str:
     return grid
 
 
-def read_words(path: str) -> List[str]:
+def read_words(path: str) -> 'List[str]':
     """ Read words from file. """
     words = []  # type: List[str]
 
