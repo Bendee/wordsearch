@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from typing import Dict, List, Tuple
     from multiprocessing.sharedctypes import _Value
+    from threading import Event
 
     Axes = Tuple[str, ...]
     # There doesn't seem to be a better way to get the correct type for this
@@ -23,6 +24,26 @@ if TYPE_CHECKING:
 
 
 ROW_LENGTH = 10000  # type: int
+
+
+def share_axes(combined_axes: 'CombinedAxes') -> None:
+    """ Make axes available to workers. """
+    global axes
+    axes = combined_axes  # type: CombinedAxes
+
+
+def contains_word(event: 'Event', word: str, index: int) -> bool:
+    """ Check if word is contained in axes."""
+    global axes
+    found = any(
+        word in axis.value
+        for axis in axes[index]
+    )  # type: bool
+
+    if found:
+        event.set()
+
+    return found
 
 
 class WordSearch(object):
