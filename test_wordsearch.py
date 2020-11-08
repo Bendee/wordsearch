@@ -73,7 +73,11 @@ def test__generate_rows(benchmark) -> None:
 
 
 def test__generate_columns(benchmark) -> None:
-    benchmark(WS._generate_columns)
+    benchmark(WS._generate_columns, rows=WS.rows)
+
+
+def test__combine_axes(benchmark) -> None:
+    benchmark(WS._combine_axes, rows=WS.rows, columns=WS.columns)
 
 
 @mark.parametrize("word, expected", WORDS.items())

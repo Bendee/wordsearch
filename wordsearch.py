@@ -1,4 +1,8 @@
 #! /usr/bin/env python3
+# Multiprocessing
+from ctypes import c_wchar_p
+from multiprocessing import Value
+
 # CLI Arguments
 from sys import argv
 from getopt import getopt, GetoptError
@@ -8,7 +12,14 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from typing import Dict, List
+    from typing import Dict, List, Tuple
+    from multiprocessing.sharedctypes import _Value
+
+    Axes = Tuple[str, ...]
+    # There doesn't seem to be a better way to get the correct type for this
+    SharedAxis = _Value
+    CombinedAxis = Tuple[SharedAxis, SharedAxis]
+    CombinedAxes = Tuple[CombinedAxis, ...]
 
 
 ROW_LENGTH = 10000  # type: int
@@ -20,25 +31,38 @@ class WordSearch(object):
         self._axis_length = axis_length  # type: int
         self._cache = {}  # type: Dict[str, bool]
 
+        print('Loading grid: ....')
         if len(grid) != self._axis_length**2:
             raise RuntimeError("Not enough words!")
 
-        self.rows = self._generate_rows(grid)  # type: List[str]
-        self.columns = self._generate_columns()  # type: List[str]
+        self.rows = self._generate_rows(grid)  # type: Axes
+        self.columns = self._generate_columns(self.rows)  # type: Axes
+        self.axes = self._combine_axes(self.rows, self.columns)  # type: CombinedAxes
+        print('Loading grid: DONE')
 
-    def _generate_rows(self, grid: str) -> 'List[str]':
+    def _generate_rows(self, grid: str) -> 'Axes':
         """ Split grid into rows. """
-        return [
+        return tuple(
             grid[self._axis_length*row:self._axis_length*(row + 1)]
             for row in range(self._axis_length)
-        ]
+        )
 
-    def _generate_columns(self) -> 'List[str]':
+    def _generate_columns(self, rows: 'Axes') -> 'Axes':
         """ Transpose rows to get columns. """
-        return [
+        return tuple(
             ''.join(column)
-            for column in zip(*self.rows)
-        ]
+            for column in zip(*rows)
+        )
+
+    def _combine_axes(self, rows: 'Axes', columns: 'Axes') -> 'CombinedAxes':
+        """ Combine the axes and make them sharable across processes. """
+        return tuple(
+            (
+                Value(c_wchar_p, row, lock=False),
+                Value(c_wchar_p, column, lock=False),
+            )
+            for row, column in zip(rows, columns)
+        )
 
     def _is_present(self, word: str) -> bool:
         """ Iterates through rows and columns and checks for word presence. """
