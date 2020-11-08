@@ -21,18 +21,21 @@ class WordSearch(object):
         self.columns = self._generate_columns()  # type: List[str]
 
     def _generate_rows(self, grid: str) -> List[str]:
+        """ Split grid into rows. """
         return [
             grid[self._axis_length*row:self._axis_length*(row + 1)]
             for row in range(self._axis_length)
         ]
 
     def _generate_columns(self) -> List[str]:
+        """ Transpose rows to get columns. """
         return [
             ''.join(column)
             for column in zip(*self.rows)
         ]
 
     def _is_present(self, word: str) -> bool:
+        """ Iterates through rows and columns and checks for word presence. """
         for row, column in zip(self.rows, self.columns):
             if word in row:
                 return True
@@ -41,6 +44,7 @@ class WordSearch(object):
         return False
 
     def is_present(self, word: str) -> bool:
+        """ Checks if word is present in grid. """
         if word not in self._cache:
             present = self._is_present(word)
             self._cache[word] = present
@@ -49,6 +53,7 @@ class WordSearch(object):
 
 
 def read_grid(path: str) -> str:
+    """ Read grid from file. """
     grid = ''  # type: str
     with open(path, "r") as file:
         for line in file:
@@ -58,6 +63,7 @@ def read_grid(path: str) -> str:
 
 
 def read_words(path: str) -> List[str]:
+    """ Read words from file. """
     words = []  # type: List[str]
 
     with open(path, "r") as file:

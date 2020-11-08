@@ -14,6 +14,7 @@ AXIS_LENGTH = 10000  # type: int
 
 
 def create_test_grid() -> None:
+    """ Create and write a random grid to a file. """
     with open(GRID_FILE, "w") as file:
         for i in range(AXIS_LENGTH):
             file.write(''.join(
@@ -23,6 +24,7 @@ def create_test_grid() -> None:
 
 
 def write_words(words: List[str]) -> None:
+    """ Writes the list of words to a file. """
     words.extend(sample(words, len(words)//3))
     shuffle(words)
     with open(WORD_FILE, 'w') as f:
@@ -31,6 +33,10 @@ def write_words(words: List[str]) -> None:
 
 
 def get_words(amount: int = 100) -> Dict[str, bool]:
+    """ Get random words from the grid. 
+
+    Also trys to construct words that won't be contained
+    """
     words = {}  # type: Dict[str, bool]
     for i in range(amount):
         axis = choice(choice((WS.rows, WS.columns)))  # type: str
