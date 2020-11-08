@@ -18,13 +18,25 @@ class TrieNode:
         self.character = character  # type: str
         self._children = {}  # type: ChildMap
 
-    def append(self, character: str, children: 'List[str]') -> None:
-        node = self._children.get(character) or TrieNode(character)
+    def __contains__(self, string: 'List[str]'):
+        character, *remaining = string
+        if character in self._children:
+            if remaining:
+                return remaining in self._children[character]
+            else:
+                return True
+        else:
+            return False
+
+    def append(self, character: bytes, children: 'List[str]') -> None:
+        character_string = character.decode('utf-8')
+        node = self._children.get(character_string) or TrieNode(character_string)
 
         if children.size != 0:
             node.append(children[:1][0], children[1:])
 
-        self._children[character] = node
+        self._children[character_string] = node
+
 
 
 class Trie:
@@ -37,6 +49,9 @@ class Trie:
             self.iterate_axis(row)
         for column in self.grid.T:
             self.iterate_axis(column)
+
+    def __contains__(self, string: str) -> bool:
+        return list(string) in self.root
 
     def iterate_axis(self, axis: 'List[str]'):
         for index, character in enumerate(axis):
