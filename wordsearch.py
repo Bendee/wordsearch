@@ -1,7 +1,8 @@
 #! /usr/bin/env python3
 # Multiprocessing
 from ctypes import c_wchar_p
-from multiprocessing import Value
+from itertools import product
+from multiprocessing import Manager, Pool, Value
 
 # CLI Arguments
 from sys import argv
@@ -13,6 +14,8 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Dict, List, Tuple
+    from multiprocessing.managers import SyncManager
+    from multiprocessing.pool import ApplyResult
     from multiprocessing.sharedctypes import _Value
     from threading import Event
 
@@ -86,18 +89,32 @@ class WordSearch(object):
         )
 
     def _is_present(self, word: str) -> bool:
-        """ Iterates through rows and columns and checks for word presence. """
-        for row, column in zip(self.rows, self.columns):
-            if word in row:
-                return True
-            elif word in column:
-                return True
-        return False
+        """ Splits axes up and checks for word presence using multiple processes. """
+
+        with Pool(initializer=share_axes, initargs=(self.axes,)) as pool:
+            manager = Manager()  # type: SyncManager
+            event = manager.Event()  # type: Event
+
+            results = pool.starmap_async(
+                contains_word,
+                product(
+                    (event,),
+                    (word,),
+                    range(self._axis_length),
+                ),
+            )  # type: ApplyResult[List[bool]]
+
+            while not results.ready():
+                if event.is_set():
+                    return True
+
+            return any(results.get())
+
 
     def is_present(self, word: str) -> bool:
         """ Checks if word is present in grid. """
         if word not in self._cache:
-            present = self._is_present(word)
+            present = self._is_present(word)  # type: bool
             self._cache[word] = present
 
         return self._cache[word]
