@@ -1,9 +1,10 @@
 from typing import TYPE_CHECKING
 from numpy import fromstring, reshape
 from ctypes import c_char
+from itertools import product
 
 if TYPE_CHECKING:
-    from typing import Dict, List
+    from typing import Dict, List, Tuple
 
     ChildMap = Dict[str, 'TrieNode']
 
@@ -39,27 +40,13 @@ class TrieNode:
         self._children[character_string] = node
 
 
-
-class Trie:
-
-    def __init__(self, grid: 'List[List[str]]') -> None:
-        self.root = TrieNode('')
-        self.grid = grid
-
-        for row in self.grid:
-            self.iterate_axis(row)
-        for column in self.grid.T:
-            self.iterate_axis(column)
-
-    def __contains__(self, string: str) -> bool:
-        return list(string) in self.root
-
-    def iterate_axis(self, axis: 'List[str]'):
-        for index, character in enumerate(axis):
-            self.root.append(
-                character,
-                axis[index+1:min(AXIS_LENGTH, index + MAX_WORD_LENGTH)],
-            )
+def iterate_window(args: 'Tuple[int, int]'):
+    x, y = args
+    for i in range(x, x + 2):
+        for j in range(y, y + 2):
+            character = grid[i, j]
+            trie.append(character, grid[i, j+1:min(AXIS_LENGTH, j + MAX_WORD_LENGTH)])
+            trie.append(character, grid[i+1:min(AXIS_LENGTH, i + MAX_WORD_LENGTH), j])
 
 
 def read_grid() -> str:
@@ -74,4 +61,11 @@ def format_grid(grid: str) -> 'List[List[str]]':
 
 
 if __name__ == '__main__':
-    trie = Trie(format_grid(read_grid()))  # type: Trie
+    grid = format_grid(read_grid())
+    trie = TrieNode('')
+    window_ranges = [
+        (i, j)
+        for i, j in product(range(0, AXIS_LENGTH, 2), range(0, AXIS_LENGTH, 2))
+    ]
+    for window_range in window_ranges:
+        iterate_window(window_range)
