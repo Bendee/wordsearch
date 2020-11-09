@@ -1,5 +1,6 @@
 from typing import TYPE_CHECKING
 from numpy import fromstring, reshape
+from ctypes import c_char
 
 if TYPE_CHECKING:
     from typing import Dict, List
@@ -67,7 +68,7 @@ def read_grid() -> str:
 
 def format_grid(grid: str) -> 'List[List[str]]':
     return reshape(
-        fromstring(grid, dtype='S1', count=AXIS_LENGTH**2),
+        fromstring(grid, dtype=(c_char, (1,)), count=AXIS_LENGTH**2),
         [AXIS_LENGTH]*2,
     )
 
