@@ -4,7 +4,7 @@ from ctypes import c_char
 from itertools import product
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Tuple
+    from typing import Dict, List, Tuple, Union
 
     ChildMap = Dict[str, 'TrieNode']
 
@@ -20,7 +20,7 @@ class TrieNode:
         self.character = character  # type: str
         self._children = {}  # type: ChildMap
 
-    def __contains__(self, string: 'List[str]'):
+    def __contains__(self, string: 'Union[str, List[str]]') -> bool:
         character, *remaining = string
         if character in self._children:
             if remaining:
