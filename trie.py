@@ -31,6 +31,21 @@ class TrieNode:
         else:
             return False
 
+    def __add__(self, other: 'TrieNode') -> 'TrieNode':
+        if self.character != other.character:
+            raise ValueError('Characters do not match')
+
+        both = self._children.keys() & other._children.keys()
+        unique = other._children.keys() - both  # type: set[str]
+        for child in both:
+            node = self._children[child] + other._children[child]
+            self._children[child] = node
+
+        for child in unique:
+            self._children[child] = other._children[child]
+
+        return self
+
     def append(self, character: bytes, children: 'List[str]') -> None:
         character_string = character.decode('utf-8')
         node = self._children.get(character_string) or TrieNode(character_string)
@@ -84,3 +99,5 @@ if __name__ == '__main__':
     )
     with Pool(4, initializer=init_window, initargs=(shared_grid, shape)) as pool:
         nodes = pool.map(iterate_window, window_ranges)
+
+    trie = sum(nodes[1:], nodes[0])
