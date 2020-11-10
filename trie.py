@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
 GRID = 'bgvtt zpibu vxzft oakis fvqwl'
 AXIS_LENGTH = 5  # type: int
+WINDOW_SIZE = 5  # type: int
 MAX_WORD_LENGTH = 24  # type: int
 
 
@@ -68,8 +69,8 @@ def iterate_window(args: 'Tuple[int, int]') -> TrieNode:
     grid = frombuffer(shared_grid, dtype=(c_char, (1,))).reshape(shape)
     x, y = args
     node = TrieNode('')
-    for i in range(x, x + 2):
-        for j in range(y, y + 2):
+    for i in range(x, x + WINDOW_SIZE):
+        for j in range(y, y + WINDOW_SIZE):
             node.add_children(grid[i, j:min(AXIS_LENGTH, j + MAX_WORD_LENGTH)])
             node.add_children(grid[i:min(AXIS_LENGTH, i + MAX_WORD_LENGTH), j])
 
@@ -85,8 +86,6 @@ def format_grid(grid: str, shape: 'List[int]') -> 'List[List[str]]':
 
 
 if __name__ == '__main__':
-    window_size = 2
-
     shape = [AXIS_LENGTH]*2
     grid_string = read_grid()
     shared_grid = RawArray(c_char, AXIS_LENGTH**2)
