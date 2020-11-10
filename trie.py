@@ -59,15 +59,15 @@ def format_grid(grid: str, shape: 'List[int]') -> 'List[List[str]]':
 
 
 if __name__ == '__main__':
+    window_size = 2
+
     shape = [AXIS_LENGTH]*2
     grid_string = read_grid()
     shared_grid = RawArray(c_char, AXIS_LENGTH**2)
     grid = frombuffer(shared_grid, dtype=(c_char, (1,))).reshape(shape)
     copyto(grid, format_grid(grid_string, shape))
     trie = TrieNode('')
-    window_ranges = [
-        (i, j)
-        for i, j in product(range(0, AXIS_LENGTH, 2), range(0, AXIS_LENGTH, 2))
-    ]
-    for window_range in window_ranges:
-        iterate_window(window_range)
+    window_ranges = product(
+        range(0, AXIS_LENGTH, window_size),
+        range(0, AXIS_LENGTH, window_size),
+    )
