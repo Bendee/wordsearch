@@ -44,13 +44,21 @@ class TrieNode:
             self.append(children[:1][0], children[1:])
 
 
-def iterate_window(args: 'Tuple[int, int]'):
+def init_window(grid, shape):
+    shared_grid = grid
+    shape = shape
+
+
+def iterate_window(args: 'Tuple[int, int]') -> TrieNode:
+    grid = frombuffer(shared_grid, dtype=(c_char, (1,))).reshape(shape)
     x, y = args
+    node = TrieNode('')
     for i in range(x, x + 2):
         for j in range(y, y + 2):
-            character = grid[i, j]
-            trie.append(character, grid[i, j+1:min(AXIS_LENGTH, j + MAX_WORD_LENGTH)])
-            trie.append(character, grid[i+1:min(AXIS_LENGTH, i + MAX_WORD_LENGTH), j])
+            node.add_children(grid[i, j:min(AXIS_LENGTH, j + MAX_WORD_LENGTH)])
+            node.add_children(grid[i:min(AXIS_LENGTH, i + MAX_WORD_LENGTH), j])
+
+    return node
 
 
 def read_grid() -> str:
@@ -69,8 +77,10 @@ if __name__ == '__main__':
     shared_grid = RawArray(c_char, AXIS_LENGTH**2)
     grid = frombuffer(shared_grid, dtype=(c_char, (1,))).reshape(shape)
     copyto(grid, format_grid(grid_string, shape))
-    trie = TrieNode('')
+
     window_ranges = product(
         range(0, AXIS_LENGTH, window_size),
         range(0, AXIS_LENGTH, window_size),
     )
+    with Pool(4, initializer=init_window, initargs=(shared_grid, shape)) as pool:
+        nodes = pool.map(iterate_window, window_ranges)
