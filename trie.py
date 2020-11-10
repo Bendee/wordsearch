@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from numpy import fromstring, frombuffer, copyto
 from ctypes import c_char
-from multiprocessing import RawArray
+from multiprocessing import Pool, RawArray
 from itertools import product
 
 if TYPE_CHECKING:
