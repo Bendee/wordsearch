@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
-from numpy import fromstring, reshape
+from numpy import fromstring, frombuffer, copyto
 from ctypes import c_char
+from multiprocessing import RawArray
 from itertools import product
 
 if TYPE_CHECKING:
@@ -53,15 +54,16 @@ def read_grid() -> str:
     return GRID.replace(' ', '')
 
 
-def format_grid(grid: str) -> 'List[List[str]]':
-    return reshape(
-        fromstring(grid, dtype=(c_char, (1,)), count=AXIS_LENGTH**2),
-        [AXIS_LENGTH]*2,
-    )
+def format_grid(grid: str, shape: 'List[int]') -> 'List[List[str]]':
+    return fromstring(grid, dtype=(c_char, (1,)), count=AXIS_LENGTH**2).reshape(shape)
 
 
 if __name__ == '__main__':
-    grid = format_grid(read_grid())
+    shape = [AXIS_LENGTH]*2
+    grid_string = read_grid()
+    shared_grid = RawArray(c_char, AXIS_LENGTH**2)
+    grid = frombuffer(shared_grid, dtype=(c_char, (1,))).reshape(shape)
+    copyto(grid, format_grid(grid_string, shape))
     trie = TrieNode('')
     window_ranges = [
         (i, j)
