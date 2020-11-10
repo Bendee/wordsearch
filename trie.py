@@ -35,10 +35,13 @@ class TrieNode:
         character_string = character.decode('utf-8')
         node = self._children.get(character_string) or TrieNode(character_string)
 
-        if children.size != 0:
-            node.append(children[:1][0], children[1:])
+        node.add_children(children)
 
         self._children[character_string] = node
+
+    def add_children(self, children):
+        if children.size != 0:
+            self.append(children[:1][0], children[1:])
 
 
 def iterate_window(args: 'Tuple[int, int]'):
