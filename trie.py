@@ -93,8 +93,8 @@ if __name__ == '__main__':
     copyto(grid, format_grid(grid_string, shape))
 
     window_ranges = product(
-        range(0, AXIS_LENGTH, window_size),
-        range(0, AXIS_LENGTH, window_size),
+        range(0, AXIS_LENGTH, WINDOW_SIZE),
+        range(0, AXIS_LENGTH, WINDOW_SIZE),
     )
     with Pool(4, initializer=init_window, initargs=(shared_grid, shape)) as pool:
         nodes = pool.map(iterate_window, window_ranges)
