@@ -3,7 +3,6 @@
 from ctypes import c_wchar_p
 from itertools import product
 from multiprocessing import Pool, RawArray
-from numpy import asarray, copyto, frombuffer
 
 # CLI Arguments
 from sys import argv
@@ -14,14 +13,11 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Tuple, Type
+    from typing import Dict, List, Tuple
     from multiprocessing.sharedctypes import _Array
-
-    from numpy import ndarray
 
     # There doesn't seem to be a better way to get the correct type for these
     SharedAxes = _Array
-    AxesArray = Type[ndarray]
 
     Axes = Tuple[str, ...]
 
@@ -30,13 +26,13 @@ ROW_LENGTH = 10000  # type: int
 WINDOW_RANGE = 100  # type: int
 
 
-def share_axes(rows: 'SharedAxes', columns: 'SharedAxes', dtype: str) -> None:
+def share_axes(rows: 'SharedAxes', columns: 'SharedAxes') -> None:
     """ Load axes from memory and share them with workers """
     global axes
     axes = tuple(
-        frombuffer(axis, dtype=dtype)
+        tuple(axis)
         for axis in (rows, columns)
-    )  # type: Tuple[AxesArray, ...]
+    )  # type: Tuple[Axes, ...]
 
 
 def contains_word(word: str, search_index: int) -> bool:
@@ -44,7 +40,7 @@ def contains_word(word: str, search_index: int) -> bool:
     global axes
     for axis in axes:
         for index in range(search_index, search_index + WINDOW_RANGE):
-            if word in axis[index].decode('utf-8'):
+            if word in axis[index]:
                 return True
 
     return False
@@ -61,10 +57,9 @@ class WordSearch(object):
         if len(grid) != size:
             raise RuntimeError("Not enough words!")
 
-        self._dtype = '|S{size}'.format(size=self._axis_length)  # type: str
-
         self.rows = self._generate_rows(grid)  # type: Axes
         self.columns = self._generate_columns()  # type: Axes
+
         self._shared_rows = self._share_axes(self.rows)  # type:SharedAxes
         self._shared_columns = self._share_axes(self.columns)  # type: SharedAxes
         print('Loading grid: DONE')
@@ -83,25 +78,13 @@ class WordSearch(object):
             for column in zip(*self.rows)
         )
 
-    def _initialise_axis_array(self, adjust: int = 1) -> 'SharedAxes':
-        """ Create in memory array for storing numpy arrays. """
-        return RawArray(c_wchar_p, int(self._axis_length*12.5*adjust))
-
     def _share_axes(self, axes: 'Axes') -> 'SharedAxes':
-        """ Create shared numpy array of a certain axis. """
-        axes_array = self._initialise_axis_array()  # type: SharedAxes
-        shared_axes = frombuffer(axes_array, dtype=self._dtype)  # type: AxesArray
-        if shared_axes.size < self._axis_length:
-            adjustment = self._axis_length//shared_axes.size  # type: int
-            axes_array = self._initialise_axis_array(adjustment)  # type: SharedAxes
-            shared_axes = frombuffer(axes_array, dtype=self._dtype)  # type: AxesArray
-
-        copyto(shared_axes, asarray(axes, dtype=self._dtype))
-        return axes_array
+        """ Create in memory array for storing and sharing axes. """
+        return RawArray(c_wchar_p, axes)
 
     def _is_present(self, word: str) -> bool:
         """ Splits axes up and checks for word presence using multiple processes. """
-        initargs = (self._shared_rows, self._shared_columns, self._dtype)
+        initargs = (self._shared_rows, self._shared_columns)
         with Pool(initializer=share_axes, initargs=initargs) as pool:
             results = pool.starmap(
                 contains_word,
