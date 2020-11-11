@@ -5,7 +5,7 @@ from typing import Dict, List
 
 from pytest import mark
 
-from wordsearch import WordSearch, read_grid
+from wordsearch import WordSearch, read_grid, Axes
 
 GRID_FILE = 'grid.txt'  # type: str
 WORD_FILE = 'words.txt'  # type: str
@@ -76,8 +76,9 @@ def test__generate_columns(benchmark) -> None:
     benchmark(WS._generate_columns, rows=WS.rows)
 
 
-def test__combine_axes(benchmark) -> None:
-    benchmark(WS._combine_axes, rows=WS.rows, columns=WS.columns)
+@mark.parametrize("axes", (WS.rows, WS.columns))
+def test__share_axes(benchmark, axes: 'Axes') -> None:
+    benchmark(WS._share_axes, axes=axes)
 
 
 @mark.parametrize("word, expected", WORDS.items())

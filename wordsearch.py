@@ -2,7 +2,8 @@
 # Multiprocessing
 from ctypes import c_wchar_p
 from itertools import product
-from multiprocessing import Manager, Pool, Value
+from multiprocessing import Pool, RawArray
+from numpy import asarray, copyto, frombuffer
 
 # CLI Arguments
 from sys import argv
@@ -13,40 +14,40 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Tuple
-    from multiprocessing.managers import SyncManager
-    from multiprocessing.pool import ApplyResult
-    from multiprocessing.sharedctypes import _Value
-    from threading import Event
+    from typing import Dict, List, Tuple, Type
+    from multiprocessing.sharedctypes import _Array
+
+    from numpy import ndarray
+
+    # There doesn't seem to be a better way to get the correct type for these
+    SharedAxes = _Array
+    AxesArray = Type[ndarray]
 
     Axes = Tuple[str, ...]
-    # There doesn't seem to be a better way to get the correct type for this
-    SharedAxis = _Value
-    CombinedAxis = Tuple[SharedAxis, SharedAxis]
-    CombinedAxes = Tuple[CombinedAxis, ...]
 
 
 ROW_LENGTH = 10000  # type: int
+WINDOW_RANGE = 100  # type: int
 
 
-def share_axes(combined_axes: 'CombinedAxes') -> None:
-    """ Make axes available to workers. """
+def share_axes(rows: 'SharedAxes', columns: 'SharedAxes', dtype: str) -> None:
+    """ Load axes from memory and share them with workers """
     global axes
-    axes = combined_axes  # type: CombinedAxes
+    axes = tuple(
+        frombuffer(axis, dtype=dtype)
+        for axis in (rows, columns)
+    )  # type: Tuple[AxesArray, ...]
 
 
-def contains_word(event: 'Event', word: str, index: int) -> bool:
+def contains_word(word: str, search_index: int) -> bool:
     """ Check if word is contained in axes."""
     global axes
-    found = any(
-        word in axis.value
-        for axis in axes[index]
-    )  # type: bool
+    for axis in axes:
+        for index in range(search_index, search_index + WINDOW_RANGE):
+            if word in axis[index].decode('utf-8'):
+                return True
 
-    if found:
-        event.set()
-
-    return found
+    return False
 
 
 class WordSearch(object):
@@ -56,12 +57,16 @@ class WordSearch(object):
         self._cache = {}  # type: Dict[str, bool]
 
         print('Loading grid: ....')
-        if len(grid) != self._axis_length**2:
+        size = self._axis_length**2  # type: int
+        if len(grid) != size:
             raise RuntimeError("Not enough words!")
 
+        self._dtype = '|S{size}'.format(size=self._axis_length)  # type: str
+
         self.rows = self._generate_rows(grid)  # type: Axes
-        self.columns = self._generate_columns(self.rows)  # type: Axes
-        self.axes = self._combine_axes(self.rows, self.columns)  # type: CombinedAxes
+        self.columns = self._generate_columns()  # type: Axes
+        self._shared_rows = self._share_axes(self.rows)  # type:SharedAxes
+        self._shared_columns = self._share_axes(self.columns)  # type: SharedAxes
         print('Loading grid: DONE')
 
     def _generate_rows(self, grid: str) -> 'Axes':
@@ -71,45 +76,42 @@ class WordSearch(object):
             for row in range(self._axis_length)
         )
 
-    def _generate_columns(self, rows: 'Axes') -> 'Axes':
+    def _generate_columns(self) -> 'Axes':
         """ Transpose rows to get columns. """
         return tuple(
             ''.join(column)
-            for column in zip(*rows)
+            for column in zip(*self.rows)
         )
 
-    def _combine_axes(self, rows: 'Axes', columns: 'Axes') -> 'CombinedAxes':
-        """ Combine the axes and make them sharable across processes. """
-        return tuple(
-            (
-                Value(c_wchar_p, row, lock=False),
-                Value(c_wchar_p, column, lock=False),
-            )
-            for row, column in zip(rows, columns)
-        )
+    def _initialise_axis_array(self, adjust: int = 1) -> 'SharedAxes':
+        """ Create in memory array for storing numpy arrays. """
+        return RawArray(c_wchar_p, int(self._axis_length*12.5*adjust))
+
+    def _share_axes(self, axes: 'Axes') -> 'SharedAxes':
+        """ Create shared numpy array of a certain axis. """
+        axes_array = self._initialise_axis_array()  # type: SharedAxes
+        shared_axes = frombuffer(axes_array, dtype=self._dtype)  # type: AxesArray
+        if shared_axes.size < self._axis_length:
+            adjustment = self._axis_length//shared_axes.size  # type: int
+            axes_array = self._initialise_axis_array(adjustment)  # type: SharedAxes
+            shared_axes = frombuffer(axes_array, dtype=self._dtype)  # type: AxesArray
+
+        copyto(shared_axes, asarray(axes, dtype=self._dtype))
+        return axes_array
 
     def _is_present(self, word: str) -> bool:
         """ Splits axes up and checks for word presence using multiple processes. """
-
-        with Pool(initializer=share_axes, initargs=(self.axes,)) as pool:
-            manager = Manager()  # type: SyncManager
-            event = manager.Event()  # type: Event
-
-            results = pool.starmap_async(
+        initargs = (self._shared_rows, self._shared_columns, self._dtype)
+        with Pool(initializer=share_axes, initargs=initargs) as pool:
+            results = pool.starmap(
                 contains_word,
                 product(
-                    (event,),
                     (word,),
-                    range(self._axis_length),
+                    range(0, self._axis_length, WINDOW_RANGE),
                 ),
-            )  # type: ApplyResult[List[bool]]
+            )  # type: List[bool]
 
-            while not results.ready():
-                if event.is_set():
-                    return True
-
-            return any(results.get())
-
+            return any(results)
 
     def is_present(self, word: str) -> bool:
         """ Checks if word is present in grid. """
