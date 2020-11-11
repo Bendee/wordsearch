@@ -1,11 +1,18 @@
 from pathlib import Path
 from random import choice, randrange, sample, shuffle
 from string import ascii_lowercase
-from typing import Dict, List
+from typing import TYPE_CHECKING
 
 from pytest import mark
 
 from wordsearch import WordSearch, read_grid
+
+
+if TYPE_CHECKING:
+    from typing import Dict, List
+
+    from wordsearch import Axes
+
 
 GRID_FILE = 'grid.txt'  # type: str
 WORD_FILE = 'words.txt'  # type: str
@@ -23,7 +30,7 @@ def create_test_grid() -> None:
             ) + '\n')
 
 
-def write_words(words: List[str]) -> None:
+def write_words(words: 'List[str]') -> None:
     """ Writes the list of words to a file. """
     words.extend(sample(words, len(words)//3))
     shuffle(words)
@@ -32,7 +39,7 @@ def write_words(words: List[str]) -> None:
             f.write(word + '\n')
 
 
-def get_words(amount: int = 100) -> Dict[str, bool]:
+def get_words(amount: int = 100) -> 'Dict[str, bool]':
     """ Get random words from the grid. 
 
     Also trys to construct words that won't be contained
@@ -73,7 +80,12 @@ def test__generate_rows(benchmark) -> None:
 
 
 def test__generate_columns(benchmark) -> None:
-    benchmark(WS._generate_columns)
+    benchmark(WS._generate_columns, rows=WS.rows)
+
+
+@mark.parametrize("axes", (WS.rows, WS.columns))
+def test__share_axes(benchmark, axes: 'Axes') -> None:
+    benchmark(WS._share_axes, axes=axes)
 
 
 @mark.parametrize("word, expected", WORDS.items())
