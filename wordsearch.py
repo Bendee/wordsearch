@@ -40,7 +40,7 @@ class WordSearch(object):
             for column in zip(*self.rows)
         ]
 
-    def _is_present(self, word: str) -> bool:
+    def _linear_search(self, word: str) -> bool:
         """ Iterates through rows and columns and checks for word presence. """
         for row, column in zip(self.rows, self.columns):
             if word in row:
@@ -52,7 +52,7 @@ class WordSearch(object):
     def is_present(self, word: str) -> bool:
         """ Checks if word is present in grid. """
         if word not in self._cache:
-            present = self._is_present(word)
+            present = self._linear_search(word)
             self._cache[word] = present
 
         return self._cache[word]
