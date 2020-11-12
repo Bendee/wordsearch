@@ -1,8 +1,3 @@
-from pathlib import Path
-from random import choice, randrange, sample, shuffle
-from string import ascii_lowercase
-from typing import TYPE_CHECKING
-
 from pytest import mark
 
 from wordsearch import WordSearch, read_grid
@@ -19,48 +14,12 @@ ROW_LENGTH = 100  # type: int
 WINDOW_SIZE = 50  # type: int
 
 
-def create_test_grid() -> None:
-    """ Create and write a random grid to a file. """
-    with open(GRID_FILE, "w") as file:
-        for i in range(AXIS_LENGTH):
-            file.write(''.join(
-                choice(ascii_lowercase)
-                for j in range(AXIS_LENGTH)
-            ) + '\n')
 
 
-def write_words(words: 'List[str]') -> None:
-    """ Writes the list of words to a file. """
-    words.extend(sample(words, len(words)//3))
-    shuffle(words)
-    with open(WORD_FILE, 'w') as f:
-        for word in words:
-            f.write(word + '\n')
 
 
-def get_words(amount: int = 100) -> 'Dict[str, bool]':
-    """ Get random words from the grid. 
-
-    Also trys to construct words that won't be contained
-    """
-    words = {}  # type: Dict[str, bool]
-    for i in range(amount):
-        axis = choice(choice((WS.rows, WS.columns)))  # type: str
-        index = randrange(AXIS_LENGTH)  # type: int
-
-        in_word = axis[
-            index:index + randrange(5, max(12, min(24, (AXIS_LENGTH - index))))
-        ]  # type: str
-        words[in_word] = True
-
-        out_word = ''.join(sample(in_word, len(in_word)))  # type: str
-        words[out_word] = WS.is_present(out_word)
-
-    return words
 
 
-if NEW_GRID:
-    create_test_grid()
 
 
 GRID_STRING = read_grid(GRID_FILE)  # type: str
