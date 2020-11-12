@@ -9,13 +9,12 @@ from numpy import fromstring, frombuffer, copyto
 if TYPE_CHECKING:
     from typing import List, Set, Tuple, Type
     from typing_extensions import TypedDict
-    from ctypes import _CDataMeta as CType
+    from ctypes import Array, _CDataMeta as CType
     from multiprocessing.pool import Pool as PoolType
-    from multiprocessing.sharedctypes import _Array as SharedArray
 
     from numpy import ndarray
 
-    SharedGridArray = SharedArray
+    SharedGridArray = Array[c_char]
     GridDType = Tuple[CType, Tuple[int]]
     GridShape = Tuple[int, int]
     Grid = Type[ndarray]

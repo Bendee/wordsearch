@@ -7,9 +7,9 @@ from multiprocessing import Pool, RawArray
 if TYPE_CHECKING:
     from typing import List, Tuple
     from typing_extensions import TypedDict
-    from multiprocessing.sharedctypes import _Array as SharedArray
+    from ctypes import Array
 
-    SharedAxes = SharedArray
+    SharedAxes = Array[c_wchar_p]
     Axes = Tuple[str, ...]
     AxesInfo = TypedDict(
         'AxesInfo',
