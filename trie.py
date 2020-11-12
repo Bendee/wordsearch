@@ -4,10 +4,9 @@ from ctypes import c_char
 from multiprocessing import Pool, RawArray
 from itertools import product
 
-if TYPE_CHECKING:
-    from typing import Dict, List, Tuple, Union
 
-    ChildMap = Dict[str, 'TrieNode']
+if TYPE_CHECKING:
+    from typing import Dict, List, Set, Tuple, Union
 
 
 GRID = 'bgvtt zpibu vxzft oakis fvqwl'
@@ -16,48 +15,46 @@ WINDOW_SIZE = 5  # type: int
 MAX_WORD_LENGTH = 24  # type: int
 
 
-class TrieNode:
+class TrieDict(dict):
 
-    def __init__(self, character: str) -> None:
-        self.character = character  # type: str
-        self._children = {}  # type: ChildMap
+    def add_children(self, children: 'List[bytes]'):
+        if children.size != 0:
+            self.add_child(children[0], children[1:])
 
-    def __contains__(self, string: 'Union[str, List[str]]') -> bool:
-        character, *remaining = string
-        if character in self._children:
+    def add_child(self, character: bytes, children: 'List[bytes]') -> None:
+        character_string = character.decode('utf-8')
+
+        try:
+            node = self[character_string]  # type: TrieDict
+        except KeyError:
+            node = TrieDict()
+
+        node.add_children(children)
+
+        self[character_string] = node
+
+    def __add__(self, other: 'TrieDict') -> 'TrieDict':
+        both = self.keys() & other.keys()  # type: Set[str]
+        for child in both:
+            node = self[child] + other[child]  # type: TrieDict
+            self[child] = node
+
+        unique = other.keys() - both  # type: Set[str]
+        for child in unique:
+            node = other[child]  # type: TrieDict
+            self[child] = node
+
+        return self
+
+    def __contains__(self, word: 'Union[str, List[str]]') -> bool:
+        character, *remaining = word
+        if character in self.keys():
             if remaining:
-                return remaining in self._children[character]
+                return remaining in self[character]
             else:
                 return True
         else:
             return False
-
-    def __add__(self, other: 'TrieNode') -> 'TrieNode':
-        if self.character != other.character:
-            raise ValueError('Characters do not match')
-
-        both = self._children.keys() & other._children.keys()
-        unique = other._children.keys() - both  # type: set[str]
-        for child in both:
-            node = self._children[child] + other._children[child]
-            self._children[child] = node
-
-        for child in unique:
-            self._children[child] = other._children[child]
-
-        return self
-
-    def append(self, character: bytes, children: 'List[str]') -> None:
-        character_string = character.decode('utf-8')
-        node = self._children.get(character_string) or TrieNode(character_string)
-
-        node.add_children(children)
-
-        self._children[character_string] = node
-
-    def add_children(self, children):
-        if children.size != 0:
-            self.append(children[:1][0], children[1:])
 
 
 def init_window(grid, shape):
@@ -65,10 +62,10 @@ def init_window(grid, shape):
     shape = shape
 
 
-def iterate_window(args: 'Tuple[int, int]') -> TrieNode:
+def iterate_window(args: 'Tuple[int, int]') -> 'TrieDict':
     grid = frombuffer(shared_grid, dtype=(c_char, (1,))).reshape(shape)
     x, y = args
-    node = TrieNode('')
+    node = TrieDict()
     for i in range(x, x + WINDOW_SIZE):
         for j in range(y, y + WINDOW_SIZE):
             node.add_children(grid[i, j:min(AXIS_LENGTH, j + MAX_WORD_LENGTH)])
@@ -96,7 +93,7 @@ if __name__ == '__main__':
         range(0, AXIS_LENGTH, WINDOW_SIZE),
         range(0, AXIS_LENGTH, WINDOW_SIZE),
     )
-    with Pool(4, initializer=init_window, initargs=(shared_grid, shape)) as pool:
-        nodes = pool.map(iterate_window, window_ranges)
 
-    trie = sum(nodes[1:], nodes[0])
+    with Pool(initializer=init_window, initargs=(shared_grid, shape)) as pool:
+        nodes = pool.map(iterate_window, window_ranges)
+    trie = sum(nodes, TrieDict())
