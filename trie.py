@@ -6,7 +6,7 @@ from itertools import product
 
 
 if TYPE_CHECKING:
-    from typing import Dict, List, Set, Tuple, Union
+    from typing import List, Set, Tuple
 
 
 GRID = 'bgvtt zpibu vxzft oakis fvqwl'
@@ -46,7 +46,7 @@ class TrieDict(dict):
 
         return self
 
-    def __contains__(self, word: 'Union[str, List[str]]') -> bool:
+    def __contains__(self, word: 'List[str]') -> bool:
         character, *remaining = word
         if character in self.keys():
             if remaining:
@@ -57,12 +57,14 @@ class TrieDict(dict):
             return False
 
 
-def init_window(grid, shape):
+def init_window(grid, shape_list) -> None:
+    global shared_grid, shape
     shared_grid = grid
-    shape = shape
+    shape = shape_list
 
 
 def iterate_window(args: 'Tuple[int, int]') -> 'TrieDict':
+    global shared_grid, shape
     grid = frombuffer(shared_grid, dtype=(c_char, (1,))).reshape(shape)
     x, y = args
     node = TrieDict()
@@ -74,26 +76,49 @@ def iterate_window(args: 'Tuple[int, int]') -> 'TrieDict':
     return node
 
 
+class Trie:
+
+    def __init__(self, grid: str, axis_length: int = AXIS_LENGTH, window_size: int = WINDOW_SIZE) -> None:
+        self._axis_length = axis_length  # type: int
+        self._shape = [axis_length]*2  # type: List[int]
+        self._dtype = (c_char, (1,))  # type: Tuple[c_char, Tuple[int]]
+        self._grid = self._load_grid(grid)
+        self._trie = self._generate_trie(window_size)  # type: TrieDict
+
+    def _load_grid(self, grid: str):
+        size = self._axis_length**2
+
+        grid_array = RawArray(c_char, size)
+        shared_grid = frombuffer(grid_array, dtype=self._dtype).reshape(self._shape)
+        copyto(shared_grid, self._format_grid(grid))
+
+        return grid_array
+
+    def _format_grid(self, grid: str, size: int):
+        return fromstring(
+            grid,
+            dtype=self._dtype,
+            count=size,
+        ).reshape(self._shape)
+
+    def _generate_trie(self, window_size: int) -> TrieDict:
+        window_ranges = product(
+            range(0, self._axis_length, window_size),
+            range(0, self._axis_length, window_size),
+        )
+
+        with Pool(initializer=init_window, initargs=(self._grid, self._shape)) as pool:
+            nodes = pool.map(iterate_window, window_ranges)
+
+        return sum(nodes, TrieDict())
+
+    def __contains__(self, word: str) -> bool:
+        return list(word) in self._trie
+
+
 def read_grid() -> str:
     return GRID.replace(' ', '')
 
 
-def format_grid(grid: str, shape: 'List[int]') -> 'List[List[str]]':
-    return fromstring(grid, dtype=(c_char, (1,)), count=AXIS_LENGTH**2).reshape(shape)
-
-
 if __name__ == '__main__':
-    shape = [AXIS_LENGTH]*2
-    grid_string = read_grid()
-    shared_grid = RawArray(c_char, AXIS_LENGTH**2)
-    grid = frombuffer(shared_grid, dtype=(c_char, (1,))).reshape(shape)
-    copyto(grid, format_grid(grid_string, shape))
-
-    window_ranges = product(
-        range(0, AXIS_LENGTH, WINDOW_SIZE),
-        range(0, AXIS_LENGTH, WINDOW_SIZE),
-    )
-
-    with Pool(initializer=init_window, initargs=(shared_grid, shape)) as pool:
-        nodes = pool.map(iterate_window, window_ranges)
-    trie = sum(nodes, TrieDict())
+    trie = Trie(read_grid())
