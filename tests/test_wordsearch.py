@@ -11,13 +11,12 @@ from wordsearch import WordSearch, read_grid
 if TYPE_CHECKING:
     from typing import Dict, List
 
-    from wordsearch import Axes
-
 
 GRID_FILE = 'grid.txt'  # type: str
 WORD_FILE = 'words.txt'  # type: str
 NEW_GRID = not Path(GRID_FILE).exists()  # type: bool
-AXIS_LENGTH = 10000  # type: int
+ROW_LENGTH = 100  # type: int
+WINDOW_SIZE = 50  # type: int
 
 
 def create_test_grid() -> None:
@@ -63,8 +62,9 @@ def get_words(amount: int = 100) -> 'Dict[str, bool]':
 if NEW_GRID:
     create_test_grid()
 
-GRID = read_grid(GRID_FILE)  # type: str
-WS = WordSearch(GRID, AXIS_LENGTH)  # type: WordSearch
+
+GRID_STRING = read_grid(GRID_FILE)  # type: str
+WS = WordSearch(GRID_STRING, axis_length=ROW_LENGTH)  # type: WordSearch
 WORDS = get_words()  # type: Dict[str, bool]
 
 if NEW_GRID:
@@ -75,32 +75,7 @@ def test_read_grid(benchmark) -> None:
     benchmark(read_grid, path=GRID_FILE)
 
 
-def test__generate_rows(benchmark) -> None:
-    benchmark(WS._generate_rows, grid=GRID)
-
-
-def test__generate_columns(benchmark) -> None:
-    benchmark(WS._generate_columns, rows=WS.rows)
-
-
-@mark.parametrize("axes", (WS.rows, WS.columns))
-def test__share_axes(benchmark, axes: 'Axes') -> None:
-    benchmark(WS._share_axes, axes=axes)
-
-
 @mark.parametrize("word, expected", WORDS.items())
 def test_is_present(benchmark, word: str, expected: bool) -> None:
     result = benchmark(WS.is_present, word=word)  # type: bool
-    assert result == expected
-
-
-@mark.parametrize("word, expected", WORDS.items())
-def test__linear_search(benchmark, word: str, expected: bool) -> None:
-    result = benchmark(WS._linear_search, word=word)  # type: bool
-    assert result == expected
-
-
-@mark.parametrize("word, expected", WORDS.items())
-def test__multiprocess_search(benchmark, word: str, expected: bool) -> None:
-    result = benchmark(WS._multiprocess_search, word=word)  # type: bool
     assert result == expected
