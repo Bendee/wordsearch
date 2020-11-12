@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from typing import Dict, List
 
 
+ROW_LENGTH = 10000 # type: int
 WINDOW_SIZE = 500  # type: int
 MAX_WORD_LENGTH = 24  # type: int
 
