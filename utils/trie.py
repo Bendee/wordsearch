@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING
-from numpy import fromstring, frombuffer, copyto
 from ctypes import c_char
-from multiprocessing import Pool, RawArray
 from itertools import product
+from multiprocessing import Pool, RawArray
+
+from numpy import fromstring, frombuffer, copyto
 
 
 if TYPE_CHECKING:
@@ -113,7 +114,9 @@ class Trie:
         self._axis_length = axis_length  # type: int
         self._shape = (axis_length,)*2  # type: GridShape
         self._dtype = (c_char, (1,))  # type: GridDType
+
         self._grid = self._load_grid(grid)  # type: SharedGridArray
+
         self._root = TrieDict()  # type: TrieDict
         self._fill_trie(window_size, max_word)
 

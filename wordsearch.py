@@ -1,13 +1,10 @@
 #! /usr/bin/env python3
-# CLI Arguments
-from sys import argv
-from getopt import getopt, GetoptError
-
-from string import ascii_lowercase
 from typing import TYPE_CHECKING
+from getopt import getopt, GetoptError
+from string import ascii_lowercase
+from sys import argv
 
-from utils.trie import Trie
-from utils.grid import Grid
+from utils import Grid, Trie
 
 
 if TYPE_CHECKING:
