@@ -90,7 +90,7 @@ class Trie:
 
         grid_array = RawArray(c_char, size)
         shared_grid = frombuffer(grid_array, dtype=self._dtype).reshape(self._shape)
-        copyto(shared_grid, self._format_grid(grid))
+        copyto(shared_grid, self._format_grid(grid, size))
 
         return grid_array
 
