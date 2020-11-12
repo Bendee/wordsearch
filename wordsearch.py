@@ -11,7 +11,7 @@ from getopt import getopt, GetoptError
 from string import ascii_lowercase
 from typing import TYPE_CHECKING
 
-from trie import Trie
+from utils.trie import Trie
 
 
 if TYPE_CHECKING:
