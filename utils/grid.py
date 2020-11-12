@@ -21,21 +21,21 @@ if TYPE_CHECKING:
     )
 
 
-def share_axes(axes_info: 'AxesInfo') -> None:
+def _share_axes(axes_info: 'AxesInfo') -> None:
     """ Load axes from memory and share them with workers """
     global axes, window_size
     axes = tuple(
         tuple(axis)
         for axis in (axes_info.get('rows'), axes_info.get('columns'))
     )  # type: Tuple[Axes, ...]
-    window_size = axes_info.get('info')  # type: int
+    window_size = axes_info.get('window')  # type: int
 
 
-def contains_word(word: str, search_index: int) -> bool:
+def _contains_word(word: str, search_index: int) -> bool:
     """ Check if word is contained in axes."""
-    global axes
+    global axes, window_size
     for axis in axes:
-        for index in range(search_index, search_index + WINDOW_SIZE):
+        for index in range(search_index, search_index + window_size):
             if word in axis[index]:
                 return True
 
@@ -88,15 +88,16 @@ class Grid:
 
     def multiprocess_search(self, word: str) -> bool:
         """ Splits axes up and checks for word presence using multiple processes. """
+        print(self._window_size)
         axes_info = {
             'rows': self._shared_rows,
             'columns': self._shared_columns,
             'window': self._window_size,
         }  # type: AxesInfo
 
-        with Pool(initializer=share_axes, initargs=(axes_info,)) as pool:
+        with Pool(initializer=_share_axes, initargs=(axes_info,)) as pool:
             results = pool.starmap(
-                contains_word,
+                _contains_word,
                 product(
                     (word,),
                     range(0, self._axis_length, self._window_size),
