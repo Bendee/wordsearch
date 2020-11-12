@@ -6,54 +6,27 @@ from getopt import getopt, GetoptError
 from string import ascii_lowercase
 from typing import TYPE_CHECKING
 
+from trie import Trie
+
 
 if TYPE_CHECKING:
     from typing import Dict, List
 
 
-ROW_LENGTH = 10000  # type: int
+WINDOW_SIZE = 500  # type: int
+MAX_WORD_LENGTH = 24  # type: int
 
 
 class WordSearch(object):
 
-    def __init__(self, grid: str, axis_length: int = ROW_LENGTH) -> None:
-        self._axis_length = axis_length  # type: int
+    def __init__(self, grid: str, axis_length: int = ROW_LENGTH, window_size: int = WINDOW_SIZE, max_word: int = MAX_WORD_LENGTH) -> None:
         self._cache = {}  # type: Dict[str, bool]
-
-        if len(grid) != self._axis_length**2:
-            raise RuntimeError("Not enough words!")
-
-        self.rows = self._generate_rows(grid)  # type: List[str]
-        self.columns = self._generate_columns()  # type: List[str]
-
-    def _generate_rows(self, grid: str) -> 'List[str]':
-        """ Split grid into rows. """
-        return [
-            grid[self._axis_length*row:self._axis_length*(row + 1)]
-            for row in range(self._axis_length)
-        ]
-
-    def _generate_columns(self) -> 'List[str]':
-        """ Transpose rows to get columns. """
-        return [
-            ''.join(column)
-            for column in zip(*self.rows)
-        ]
-
-    def _is_present(self, word: str) -> bool:
-        """ Iterates through rows and columns and checks for word presence. """
-        for row, column in zip(self.rows, self.columns):
-            if word in row:
-                return True
-            elif word in column:
-                return True
-        return False
+        self._trie = Trie(grid, axis_length, window_size, max_word)  # type: Trie
 
     def is_present(self, word: str) -> bool:
         """ Checks if word is present in grid. """
         if word not in self._cache:
-            present = self._is_present(word)
-            self._cache[word] = present
+            self._cache[word] = word in self._trie
 
         return self._cache[word]
 

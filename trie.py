@@ -32,12 +32,6 @@ if TYPE_CHECKING:
     )
 
 
-GRID = 'bgvtt zpibu vxzft oakis fvqwl'
-AXIS_LENGTH = 5  # type: int
-WINDOW_SIZE = 5  # type: int
-MAX_WORD_LENGTH = 24  # type: int
-
-
 class TrieDict(dict):
 
     def add_children(self, children: 'Grid') -> None:
@@ -104,7 +98,7 @@ def iterate_window(ranges: 'Range') -> 'TrieDict':
 
 class Trie:
 
-    def __init__(self, grid: str, axis_length: int = AXIS_LENGTH, window_size: int = WINDOW_SIZE, max_word: int = MAX_WORD_LENGTH) -> None:
+    def __init__(self, grid: str, axis_length: int, window_size: int, max_word: int) -> None:
         self._axis_length = axis_length  # type: int
         self._shape = (axis_length,)*2  # type: GridShape
         self._dtype = (c_char, (1,))  # type: GridDType
@@ -114,6 +108,8 @@ class Trie:
 
     def _load_grid(self, grid: str) -> 'SharedGridArray':
         size = self._axis_length**2
+        if len(grid) != size:
+            raise RuntimeError("Not enough words!")
 
         grid_array = RawArray(c_char, size)  # type: SharedGridArray
         shared_grid = frombuffer(
@@ -161,11 +157,3 @@ class Trie:
 
     def __contains__(self, word: str) -> bool:
         return list(word) in self._root
-
-
-def read_grid() -> str:
-    return GRID.replace(' ', '')
-
-
-if __name__ == '__main__':
-    trie = Trie(read_grid())
