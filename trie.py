@@ -57,15 +57,16 @@ class TrieDict(dict):
             return False
 
 
-def init_window(grid, shape_list) -> None:
-    global shared_grid, shape
+def init_window(shared_grid, shape_list, array_dtype) -> None:
+    global shared_grid, shape, dtype
     shared_grid = grid
     shape = shape_list
+    dtype = array_dtype
 
 
 def iterate_window(args: 'Tuple[int, int]') -> 'TrieDict':
-    global shared_grid, shape
-    grid = frombuffer(shared_grid, dtype=(c_char, (1,))).reshape(shape)
+    global shared_grid, shape, dtype
+    grid = frombuffer(shared_grid, dtype=dtype).reshape(shape)
     x, y = args
     node = TrieDict()
     for i in range(x, x + WINDOW_SIZE):
@@ -83,7 +84,8 @@ class Trie:
         self._shape = [axis_length]*2  # type: List[int]
         self._dtype = (c_char, (1,))  # type: Tuple[c_char, Tuple[int]]
         self._grid = self._load_grid(grid)
-        self._trie = self._generate_trie(window_size)  # type: TrieDict
+        self._root = TrieDict()  # type: TrieDict
+        self._fill_trie(window_size)
 
     def _load_grid(self, grid: str):
         size = self._axis_length**2
@@ -101,19 +103,27 @@ class Trie:
             count=size,
         ).reshape(self._shape)
 
-    def _generate_trie(self, window_size: int) -> TrieDict:
-        window_ranges = product(
+    def _fill_trie(self, window_size: int) -> None:
+        window_ranges = list(product(
             range(0, self._axis_length, window_size),
             range(0, self._axis_length, window_size),
-        )
+        ))
 
-        with Pool(initializer=init_window, initargs=(self._grid, self._shape)) as pool:
-            nodes = pool.map(iterate_window, window_ranges)
+        with Pool(initializer=init_window, initargs=(self._grid, self._shape, self._dtype)) as pool:
+            chunk_size = self._calculate_chunksize(pool, window_ranges)  # type: int
 
-        return sum(nodes, TrieDict())
+            for node in pool.imap_unordered(iterate_window, window_ranges, chunksize=chunk_size):
+                self._root += node
+
+    def _calculate_chunksize(self, pool, ranges) -> int:
+        chunk_size, extra = divmod(len(ranges), len(pool._pool) * 4)
+        if extra:
+            chunk_size += 1
+
+        return chunk_size
 
     def __contains__(self, word: str) -> bool:
-        return list(word) in self._trie
+        return list(word) in self._root
 
 
 def read_grid() -> str:
