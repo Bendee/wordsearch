@@ -11,6 +11,8 @@ from getopt import getopt, GetoptError
 from string import ascii_lowercase
 from typing import TYPE_CHECKING
 
+from trie import Trie
+
 
 if TYPE_CHECKING:
     from typing import Dict, List, Tuple
@@ -22,8 +24,9 @@ if TYPE_CHECKING:
     Axes = Tuple[str, ...]
 
 
-ROW_LENGTH = 10000  # type: int
-WINDOW_RANGE = 100  # type: int
+ROW_LENGTH = 10000 # type: int
+WINDOW_SIZE = 500  # type: int
+MAX_WORD_LENGTH = 24  # type: int
 
 
 def share_axes(rows: 'SharedAxes', columns: 'SharedAxes') -> None:
@@ -39,7 +42,7 @@ def contains_word(word: str, search_index: int) -> bool:
     """ Check if word is contained in axes."""
     global axes
     for axis in axes:
-        for index in range(search_index, search_index + WINDOW_RANGE):
+        for index in range(search_index, search_index + WINDOW_SIZE):
             if word in axis[index]:
                 return True
 
@@ -48,21 +51,24 @@ def contains_word(word: str, search_index: int) -> bool:
 
 class WordSearch(object):
 
-    def __init__(self, grid: str, axis_length: int = ROW_LENGTH) -> None:
-        self._axis_length = axis_length  # type: int
+    def __init__(self, grid: str, use_trie: bool = False, axis_length: int = ROW_LENGTH, window_size: int = WINDOW_SIZE, max_word: int = MAX_WORD_LENGTH) -> None:
         self._cache = {}  # type: Dict[str, bool]
+        self._use_trie = use_trie  # type: bool
+        if self._use_trie:
+            self._trie = Trie(grid, axis_length, window_size, max_word)  # type: Trie
+        else:
+            print('Loading grid: ....')
+            self._axis_length = axis_length  # type: int
+            size = self._axis_length**2  # type: int
+            if len(grid) != size:
+                raise RuntimeError("Not enough words!")
 
-        print('Loading grid: ....')
-        size = self._axis_length**2  # type: int
-        if len(grid) != size:
-            raise RuntimeError("Not enough words!")
+            self.rows = self._generate_rows(grid)  # type: Axes
+            self.columns = self._generate_columns()  # type: Axes
 
-        self.rows = self._generate_rows(grid)  # type: Axes
-        self.columns = self._generate_columns()  # type: Axes
-
-        self._shared_rows = self._share_axes(self.rows)  # type:SharedAxes
-        self._shared_columns = self._share_axes(self.columns)  # type: SharedAxes
-        print('Loading grid: DONE')
+            self._shared_rows = self._share_axes(self.rows)  # type:SharedAxes
+            self._shared_columns = self._share_axes(self.columns)  # type: SharedAxes
+            print('Loading grid: DONE')
 
     def _generate_rows(self, grid: str) -> 'Axes':
         """ Split grid into rows. """
@@ -108,10 +114,13 @@ class WordSearch(object):
     def is_present(self, word: str, use_multiprocess: bool = False) -> bool:
         """ Checks if word is present in grid. """
         if word not in self._cache:
-            if use_multiprocess:
-                present = self._multiprocess_search(word)  # type: bool
+            if self._use_trie:
+                present = word in self._trie  # type: bool
             else:
-                present = self._linear_search(word)  # type: bool
+                if use_multiprocess:
+                    present = self._multiprocess_search(word)  # type: bool
+                else:
+                    present = self._linear_search(word)  # type: bool
 
             self._cache[word] = present
 
