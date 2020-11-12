@@ -1,10 +1,9 @@
 #! /usr/bin/env python3
 from typing import TYPE_CHECKING
 from getopt import getopt, GetoptError
-from string import ascii_lowercase
 from sys import argv
 
-from utils import Grid, Trie
+from utils import read_grid, read_words, Grid, Trie
 
 
 if TYPE_CHECKING:
@@ -40,27 +39,6 @@ class WordSearch(object):
             self._cache[word] = present
 
         return self._cache[word]
-
-
-def read_grid(path: str) -> str:
-    """ Read grid from file. """
-    grid = ''  # type: str
-    with open(path, "r") as file:
-        for line in file:
-            grid += ''.join(filter(lambda x: x in ascii_lowercase, line))
-
-    return grid
-
-
-def read_words(path: str) -> 'List[str]':
-    """ Read words from file. """
-    words = []  # type: List[str]
-
-    with open(path, "r") as file:
-        for line in file:
-            words.append(line.strip())
-
-    return words
 
 
 if __name__ == "__main__":
