@@ -1,40 +1,20 @@
 from pytest import mark
 
-from wordsearch import WordSearch, read_grid
+from wordsearch import WordSearch
+from utils import read_grid
+
+from tests.data import GRID, GRID_FILE, ROW_LENGTH, WORDS_MAP
 
 
-if TYPE_CHECKING:
-    from typing import Dict, List
-
-
-GRID_FILE = 'grid.txt'  # type: str
-WORD_FILE = 'words.txt'  # type: str
-NEW_GRID = not Path(GRID_FILE).exists()  # type: bool
-ROW_LENGTH = 100  # type: int
-WINDOW_SIZE = 50  # type: int
-
-
-
-
-
-
-
-
-
-
-GRID_STRING = read_grid(GRID_FILE)  # type: str
-WS = WordSearch(GRID_STRING, axis_length=ROW_LENGTH)  # type: WordSearch
-WORDS = get_words()  # type: Dict[str, bool]
-
-if NEW_GRID:
-    write_words(list(get_words(400).keys()))
+WS = WordSearch(GRID, axis_length=ROW_LENGTH)  # type: WordSearch
 
 
 def test_read_grid(benchmark) -> None:
-    benchmark(read_grid, path=GRID_FILE)
+    grid = benchmark(read_grid, path=GRID_FILE)  # type: str
+    assert grid == GRID
 
 
-@mark.parametrize("word, expected", WORDS.items())
+@mark.parametrize("word, expected", WORDS_MAP.items())
 def test_is_present(benchmark, word: str, expected: bool) -> None:
     result = benchmark(WS.is_present, word=word)  # type: bool
     assert result == expected
