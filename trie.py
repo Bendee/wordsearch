@@ -52,18 +52,20 @@ class TrieDict(dict):
 
         self[character_string] = node
 
-    def __ior__(self, other: 'TrieDict') -> 'TrieDict':
+    def __or__(self, other: 'TrieDict') -> 'TrieDict':
         """ Merge two TrieDicts.
 
         Keeps the structure of both intact.
         """
         both = self.keys() & other.keys()  # type: Set[str]
         for child in both:
-            self[child] |= other[child]
+            node = self[child] | other[child]  # type: TrieDict
+            self[child] = node
 
         unique = other.keys() - both  # type: Set[str]
         for child in unique:
-            self[child] = other[child]
+            node = other[child]  # type: TrieDict
+            self[child] = node
 
         return self
 
@@ -158,7 +160,7 @@ class Trie:
             chunk_size = self._calculate_chunksize(pool, window_ranges)  # type: int
 
             for node in pool.imap_unordered(iterate_window, window_ranges, chunksize=chunk_size):
-                self._root |= node
+                self._root = self._root | node
 
     def _calculate_chunksize(self, pool: 'PoolType', ranges: 'List[Range]') -> int:
         """ Calculate the chunk size to use for batching processes. """
