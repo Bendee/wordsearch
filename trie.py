@@ -156,11 +156,21 @@ class Trie:
             'max': max_word,
         }  # type: GridInfo
 
+        i = 0
+        print('Iterating through windows.')
+        print('WARNING: This can take a while!')
         with Pool(initializer=init_window, initargs=(grid_info,)) as pool:
             chunk_size = self._calculate_chunksize(pool, window_ranges)  # type: int
 
             for node in pool.imap_unordered(iterate_window, window_ranges, chunksize=chunk_size):
+                i += 1
+
+                print('Merging node:', i, end='\r')
                 self._root = self._root | node
+            print('.'*16, end='\r')
+            print('Merging: Done')
+
+        pool.join()
 
     def _calculate_chunksize(self, pool: 'PoolType', ranges: 'List[Range]') -> int:
         """ Calculate the chunk size to use for batching processes. """
