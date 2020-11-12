@@ -7,7 +7,7 @@ from itertools import product
 
 if TYPE_CHECKING:
     from typing import List, Set, Tuple, Type
-
+    from typing_extensions import TypedDict
     from ctypes import _CDataMeta as CType
     from multiprocessing.pool import Pool as PoolType
     from multiprocessing.sharedctypes import _Array as SharedArray
@@ -15,10 +15,21 @@ if TYPE_CHECKING:
     from numpy import ndarray
 
     SharedGridArray = SharedArray
-    GridType = Tuple[CType, Tuple[int]]
+    GridDType = Tuple[CType, Tuple[int]]
     GridShape = Tuple[int, int]
     Grid = Type[ndarray]
     Range = Tuple[int, int]
+    GridInfo = TypedDict(
+        'GridInfo',
+        {
+            'grid': SharedGridArray,
+            'shape': GridShape,
+            'dtype': GridDType,
+            'window': int,
+            'axis': int,
+            'max': int,
+        },
+    )
 
 
 GRID = 'bgvtt zpibu vxzft oakis fvqwl'
@@ -67,36 +78,39 @@ class TrieDict(dict):
             return False
 
 
-def init_window(grid: 'SharedGridArray', array_shape: 'GridShape', array_dtype: 'GridType') -> None:
-    global shared_grid, shape, dtype
-    shared_grid = grid
-    shape = array_shape
-    dtype = array_dtype
+def init_window(grid_info: 'GridInfo') -> None:
+    global shared_grid, shape, dtype, window_size, axis_length, max_word
+    shared_grid = grid_info.get('grid')
+    shape = grid_info.get('shape')
+    dtype = grid_info.get('dtype')
+    window_size = grid_info.get('window')
+    axis_length = grid_info.get('axis')
+    max_word = grid_info.get('max')
 
 
 def iterate_window(ranges: 'Range') -> 'TrieDict':
-    global shared_grid, shape, dtype
+    global shared_grid, shape, dtype, window_size, axis_length, max_word
     grid = frombuffer(shared_grid, dtype=dtype).reshape(shape)  # type: Grid
 
     x, y = ranges
     node = TrieDict()  # type: TrieDict
-    for i in range(x, x + WINDOW_SIZE):
-        for j in range(y, y + WINDOW_SIZE):
-            node.add_children(grid[i, j:min(AXIS_LENGTH, j + MAX_WORD_LENGTH)])
-            node.add_children(grid[i:min(AXIS_LENGTH, i + MAX_WORD_LENGTH), j])
+    for i in range(x, x + window_size):
+        for j in range(y, y + window_size):
+            node.add_children(grid[i, j:min(axis_length, j + max_word)])
+            node.add_children(grid[i:min(axis_length, i + max_word), j])
 
     return node
 
 
 class Trie:
 
-    def __init__(self, grid: str, axis_length: int = AXIS_LENGTH, window_size: int = WINDOW_SIZE) -> None:
+    def __init__(self, grid: str, axis_length: int = AXIS_LENGTH, window_size: int = WINDOW_SIZE, max_word: int = MAX_WORD_LENGTH) -> None:
         self._axis_length = axis_length  # type: int
         self._shape = (axis_length,)*2  # type: GridShape
-        self._dtype = (c_char, (1,))  # type: GridType
+        self._dtype = (c_char, (1,))  # type: GridDType
         self._grid = self._load_grid(grid)  # type: SharedGridArray
         self._root = TrieDict()  # type: TrieDict
-        self._fill_trie(window_size)
+        self._fill_trie(window_size, max_word)
 
     def _load_grid(self, grid: str) -> 'SharedGridArray':
         size = self._axis_length**2
@@ -117,13 +131,22 @@ class Trie:
             count=size,
         ).reshape(self._shape)
 
-    def _fill_trie(self, window_size: int) -> None:
+    def _fill_trie(self, window_size: int, max_word: int) -> None:
         window_ranges = list(product(
             range(0, self._axis_length, window_size),
             range(0, self._axis_length, window_size),
         ))  # List[Range]
 
-        with Pool(initializer=init_window, initargs=(self._grid, self._shape, self._dtype)) as pool:
+        grid_info = {
+            'grid': self._grid,
+            'shape': self._shape,
+            'dtype': self._dtype,
+            'window': window_size,
+            'axis': self._axis_length,
+            'max': max_word,
+        }  # type: GridInfo
+
+        with Pool(initializer=init_window, initargs=(grid_info,)) as pool:
             chunk_size = self._calculate_chunksize(pool, window_ranges)  # type: int
 
             for node in pool.imap_unordered(iterate_window, window_ranges, chunksize=chunk_size):
