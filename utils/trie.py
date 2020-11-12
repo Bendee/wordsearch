@@ -81,7 +81,7 @@ class TrieDict(dict):
             return False
 
 
-def init_window(grid_info: 'GridInfo') -> None:
+def _init_window(grid_info: 'GridInfo') -> None:
     """ Share the constant variables with the workers via inheritance. """
     global shared_grid, shape, dtype, window_size, axis_length, max_word
     shared_grid = grid_info.get('grid')
@@ -92,7 +92,7 @@ def init_window(grid_info: 'GridInfo') -> None:
     max_word = grid_info.get('max')
 
 
-def iterate_window(ranges: 'Range') -> 'TrieDict':
+def _iterate_window(ranges: 'Range') -> 'TrieDict':
     """Iterate through a given range and generate a Trie for that range. """
     global shared_grid, shape, dtype, window_size, axis_length, max_word
     grid = frombuffer(shared_grid, dtype=dtype).reshape(shape)  # type: Grid
@@ -116,7 +116,6 @@ class Trie:
 
         self._grid = self._load_grid(grid)  # type: SharedGridArray
 
-        self._root = TrieDict()  # type: TrieDict
         self._fill_trie(window_size, max_word)
 
     def _load_grid(self, grid: str) -> 'SharedGridArray':
@@ -144,6 +143,8 @@ class Trie:
 
     def _fill_trie(self, window_size: int, max_word: int) -> None:
         """ Fill the trie with the possible words from the grid. """
+        self._root = TrieDict()  # type: TrieDict
+
         window_ranges = list(product(
             range(0, self._axis_length, window_size),
             range(0, self._axis_length, window_size),
@@ -161,10 +162,10 @@ class Trie:
         i = 0
         print('Iterating through windows.')
         print('WARNING: This can take a while!')
-        with Pool(initializer=init_window, initargs=(grid_info,)) as pool:
+        with Pool(initializer=_init_window, initargs=(grid_info,)) as pool:
             chunk_size = self._calculate_chunksize(pool, window_ranges)  # type: int
 
-            for node in pool.imap_unordered(iterate_window, window_ranges, chunksize=chunk_size):
+            for node in pool.imap_unordered(_iterate_window, window_ranges, chunksize=chunk_size):
                 i += 1
 
                 print('Merging node:', i, end='\r')

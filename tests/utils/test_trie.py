@@ -4,16 +4,34 @@ from ctypes import Array
 from numpy import ndarray
 from pytest import mark
 
-from utils.trie import Trie
+from utils.trie import Trie, _init_window, _iterate_window
 
-from tests.data import GRID, ROW_LENGTH, WINDOW_SIZE, MAX_WORD_LENGTH, WORDS_MAP
+from tests.data import GRID, ROW_LENGTH, TRIE_NODE, WINDOW_SIZE, MAX_WORD_LENGTH, WORDS_MAP
 
 
 if TYPE_CHECKING:
-    from utils.trie import SharedGridArray, Grid
+    from utils.trie import SharedGridArray, Grid, GridInfo, TrieDict
 
 
 TRIE_INSTANCE = Trie(GRID, ROW_LENGTH, WINDOW_SIZE, MAX_WORD_LENGTH)  # type: Trie
+GRID_INFO = {
+    'grid': TRIE_INSTANCE._grid,
+    'shape': TRIE_INSTANCE._shape,
+    'dtype': TRIE_INSTANCE._dtype,
+    'window': WINDOW_SIZE,
+    'axis': TRIE_INSTANCE._axis_length,
+    'max': MAX_WORD_LENGTH,
+}  # type: GridInfo
+
+
+def test__init_window(benchmark) -> None:
+    benchmark(_init_window, grid_info=GRID_INFO)
+
+
+def test__iterate_window(benchmark) -> None:
+    _init_window(GRID_INFO)
+    result = benchmark(_iterate_window, ranges=(10, 10))  # type: TrieDict
+    assert result == TRIE_NODE
 
 
 def test__load_grid(benchmark) -> None:

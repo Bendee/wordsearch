@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 if TYPE_CHECKING:
-    from typing import Dict, List
+    from typing import Any, Dict, List
     from typing_extensions import TypedDict
 
     WordMap = Dict[str, bool]
@@ -27,9 +27,9 @@ def _load_file(path: Path) -> 'List[str]':
 
     return lines
 
-def _load_json(path: Path) -> 'WordsMaps':
+def _load_json(path: Path) -> 'Dict[str, Any]':
     with path.open('r') as file:
-        json = load(file)  # type: WordsMaps
+        json = load(file)  # type: Dict[str, Any]
 
     return json
 
@@ -39,9 +39,10 @@ _TEST_DIR = Path(__file__).parent  # type: Path
 GRID_FILE = _TEST_DIR / 'grid.txt'  # type: Path
 WORDS_FILE = _TEST_DIR / 'words.txt'  # type: Path
 _WORDS_JSON = _TEST_DIR / 'words.json'  # type: Path
+_TRIE_JSON = _TEST_DIR / 'trie.json'  # type: Path
 
 WINDOW_SIZE = 100  # type: int
-MAX_WORD_LENGTH = 10  # type: int
+MAX_WORD_LENGTH = 5  # type: int
 
 GRID = ''.join(_load_file(GRID_FILE))  # type: str
 ROW_LENGTH = int(sqrt(len(GRID)))  # type: int
@@ -50,3 +51,5 @@ WORDS = _load_file(WORDS_FILE)  # type: List[str]
 _WORDS_MAPS = _load_json(_WORDS_JSON)  # type: WordsMaps
 WORDS_MAP = _WORDS_MAPS['all']  # type: WordMap
 WINDOW_WORDS = _WORDS_MAPS['index_100']  # type: WordMap
+
+TRIE_NODE = _load_json(_TRIE_JSON)  # type: Dict[str, Any]
