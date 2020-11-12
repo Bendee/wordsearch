@@ -3,9 +3,9 @@ from typing import TYPE_CHECKING
 from pytest import mark
 
 from wordsearch import WordSearch
-from utils import Grid, read_grid, Trie
+from utils import Grid, Trie
 
-from tests.data import GRID, GRID_FILE, ROW_LENGTH, WINDOW_SIZE, WORDS_MAP
+from tests.data import GRID, ROW_LENGTH, WINDOW_SIZE, WORDS_MAP
 
 
 if TYPE_CHECKING:
@@ -17,17 +17,12 @@ if TYPE_CHECKING:
 WS = WordSearch(GRID, axis_length=ROW_LENGTH)  # type: WordSearch
 
 
-def test_read_grid(benchmark) -> None:
-    grid = benchmark(read_grid, path=GRID_FILE)  # type: str
-    assert grid == GRID
-
-
 @mark.parametrize('use_trie, expected_type', {False: Grid, True: Trie})
-def test_data_generation(benchmark, use_trie: bool, expected_type: DataType) -> None:
+def test_data_generation(benchmark, use_trie: bool, expected_type: 'DataType') -> None:
     wordsearch = benchmark(
         WordSearch,
         grid=GRID,
-        use_trie=True,
+        use_trie=use_trie,
         axis_length=ROW_LENGTH,
         window_size=WINDOW_SIZE,
     )  # type: WordSearch
