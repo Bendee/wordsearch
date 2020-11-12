@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 WS = WordSearch(GRID, axis_length=ROW_LENGTH)  # type: WordSearch
 
 
-@mark.parametrize('use_trie, expected_type', {False: Grid, True: Trie})
+@mark.parametrize('use_trie, expected_type', {False: Grid, True: Trie}.items())
 def test_data_generation(benchmark, use_trie: bool, expected_type: 'DataType') -> None:
     wordsearch = benchmark(
         WordSearch,
