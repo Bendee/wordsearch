@@ -3,11 +3,11 @@ from typing import TYPE_CHECKING
 from getopt import getopt, GetoptError
 from sys import argv
 
-from utils import read_grid, read_words, Grid, Trie
+from utils import Grid, read_grid, read_words, Trie
 
 
 if TYPE_CHECKING:
-    from typing import Dict, List
+    from typing import Dict, List, Union
 
 
 ROW_LENGTH = 10000 # type: int
@@ -21,20 +21,20 @@ class WordSearch(object):
         self._cache = {}  # type: Dict[str, bool]
         self._use_trie = use_trie  # type: bool
         if self._use_trie:
-            self._trie = Trie(grid, axis_length, window_size, max_word)  # type: Trie
+            self._data = Trie(grid, axis_length, window_size, max_word)  # type: Union[Grid, Trie]
         else:
-            self._grid = Grid(grid, axis_length, window_size)  # type: Grid
+            self._data = Grid(grid, axis_length, window_size)  # type: Union[Grid, Trie]
 
     def is_present(self, word: str, use_multiprocess: bool = False) -> bool:
         """ Checks if word is present in grid. """
         if word not in self._cache:
             if self._use_trie:
-                present = word in self._trie  # type: bool
+                present = word in self._data  # type: bool
             else:
                 if use_multiprocess:
-                    present = self._grid.multiprocess_search(word)  # type: bool
+                    present = self._data.multiprocess_search(word)  # type: bool
                 else:
-                    present = self._grid.linear_search(word)  # type: bool
+                    present = self._data.linear_search(word)  # type: bool
 
             self._cache[word] = present
 

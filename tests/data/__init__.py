@@ -25,9 +25,10 @@ def _load_json(path: str) -> 'WordMap':
     return json
 
 
-GRID_FILE = 'test_grid.txt'
-WORDS_FILE = 'test_words.txt'
-_WORDS_JSON = 'test_words.json'
+GRID_FILE = 'test_grid.txt'  # type: str
+WORDS_FILE = 'test_words.txt'  # type: str
+_WORDS_JSON = 'test_words.json'  # type: str
+WINDOW_SIZE = 100  # type: int
 
 GRID = ''.join(_load_file(GRID_FILE))  # type: str
 ROW_LENGTH = int(sqrt(len(GRID)))  # type: int
