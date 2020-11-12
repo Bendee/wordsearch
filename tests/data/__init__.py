@@ -37,6 +37,7 @@ GRID_FILE = 'tests/data/test_grid.txt'  # type: str
 WORDS_FILE = 'tests/data/test_words.txt'  # type: str
 _WORDS_JSON = 'tests/data/test_words.json'  # type: str
 WINDOW_SIZE = 100  # type: int
+MAX_WORD_LENGTH = 10  # type: int
 
 GRID = ''.join(_load_file(GRID_FILE))  # type: str
 ROW_LENGTH = int(sqrt(len(GRID)))  # type: int
