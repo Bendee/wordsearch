@@ -10,9 +10,9 @@ if TYPE_CHECKING:
 
 
 def test_read_grid(benchmark) -> None:
-    grid = benchmark(read_grid, path=GRID_FILE)  # type: str
+    grid = benchmark(read_grid, path=str(GRID_FILE))  # type: str
     assert grid == GRID
 
 def test_read_words(benchmark) -> None:
-    words = benchmark(read_words, path=WORDS_FILE)  # type: List[str]
+    words = benchmark(read_words, path=str(WORDS_FILE))  # type: List[str]
     assert words == WORDS

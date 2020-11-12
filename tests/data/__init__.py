@@ -1,6 +1,7 @@
 from typing import TYPE_CHECKING
 from json import load
 from math import sqrt
+from pathlib import Path
 
 
 if TYPE_CHECKING:
@@ -17,8 +18,8 @@ if TYPE_CHECKING:
     )
 
 
-def _load_file(path: str) -> 'List[str]':
-    with open(path, 'r') as file:
+def _load_file(path: Path) -> 'List[str]':
+    with path.open('r') as file:
         lines = [
             line.strip()
             for line in file
@@ -26,16 +27,19 @@ def _load_file(path: str) -> 'List[str]':
 
     return lines
 
-def _load_json(path: str) -> 'WordsMaps':
-    with open(path, 'r') as file:
+def _load_json(path: Path) -> 'WordsMaps':
+    with path.open('r') as file:
         json = load(file)  # type: WordsMaps
 
     return json
 
 
-GRID_FILE = 'tests/data/test_grid.txt'  # type: str
-WORDS_FILE = 'tests/data/test_words.txt'  # type: str
-_WORDS_JSON = 'tests/data/test_words.json'  # type: str
+_TEST_DIR = Path(__file__).parent  # type: Path
+
+GRID_FILE = _TEST_DIR / 'grid.txt'  # type: Path
+WORDS_FILE = _TEST_DIR / 'words.txt'  # type: Path
+_WORDS_JSON = _TEST_DIR / 'words.json'  # type: Path
+
 WINDOW_SIZE = 100  # type: int
 MAX_WORD_LENGTH = 10  # type: int
 
