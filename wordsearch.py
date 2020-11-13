@@ -75,7 +75,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         '--multiprocess',
-        help='Use multiple processes to search for words. Does not affect Trie.',
+        help='Use multiple processes to search for words/generate Trie.',
         action='store_true',
     )
 
