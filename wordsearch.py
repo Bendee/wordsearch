@@ -42,20 +42,13 @@ class WordSearch(object):
                 grid,
                 axis_length,
                 window_size,
+                multiprocessing,
             )  # type: Union[Grid, Trie]
 
-    def is_present(self, word: str, use_multiprocess: bool = False) -> bool:
+    def is_present(self, word: str) -> bool:
         """ Checks if word is present in grid. """
         if word not in self._cache:
-            if self._use_trie:
-                present = word in self._data  # type: bool
-            else:
-                if use_multiprocess:
-                    present = self._data.multiprocess_search(word)  # type: bool
-                else:
-                    present = self._data.linear_search(word)  # type: bool
-
-            self._cache[word] = present
+            self._cache[word] = word in self._data
 
         return self._cache[word]
 

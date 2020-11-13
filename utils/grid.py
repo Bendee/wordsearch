@@ -54,9 +54,16 @@ class _GridWorker:
 
 class Grid:
 
-    def __init__(self, grid: str, axis_length: int, window_size: int) -> None:
+    def __init__(
+                self,
+                grid: str,
+                axis_length: int,
+                window_size: int,
+                multiprocessing: bool,
+            ) -> None:
         self._axis_length = axis_length  # type: int
         self._window_size = window_size  # type: int
+        self._multiprocessing = multiprocessing  # type: bool
 
         print('Loading Grid: ...', end='\r')
         if len(grid) != self._axis_length**2:
@@ -87,7 +94,7 @@ class Grid:
         """ Create in memory array for storing and sharing axes. """
         return RawArray(c_wchar_p, axes)
 
-    def linear_search(self, word: str) -> bool:
+    def _linear_search(self, word: str) -> bool:
         """ Iterates through rows and columns and checks for word presence. """
         for row, column in zip(self.rows, self.columns):
             if word in row:
@@ -96,7 +103,7 @@ class Grid:
                 return True
         return False
 
-    def multiprocess_search(self, word: str) -> bool:
+    def _multiprocess_search(self, word: str) -> bool:
         """ Checks for word presence using multiple processes. """
         worker = _GridWorker()  # type: _GridWorker
         worker.share_data(
@@ -115,3 +122,10 @@ class Grid:
             )  # type: List[bool]
 
             return any(results)
+
+    def __contains__(self, word: str) -> bool:
+        """ Check if the word is contained within the Grid. """
+        if self._multiprocessing:
+            return self._multiprocess_search(word)
+        else:
+            return self._linear_search(word)

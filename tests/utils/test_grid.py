@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from utils.grid import Axes
 
 
-GRID_INSTANCE = Grid(GRID, axis_length=ROW_LENGTH, window_size=WINDOW_SIZE)  # type: Grid
+GRID_INSTANCE = Grid(GRID, ROW_LENGTH, WINDOW_SIZE, False)  # type: Grid
 SHARED_AXES = tuple(
     tuple(axis)
     for axis in (GRID_INSTANCE._shared_rows, GRID_INSTANCE._shared_columns)
@@ -66,14 +66,21 @@ def test_Grid__share_axes(benchmark, axes: 'Axes') -> None:
 
 
 @mark.parametrize('word, expected', WORDS_MAP.items())
-def test_Grid_linear_search(benchmark, word: str, expected: bool) -> None:
-    result = benchmark(GRID_INSTANCE.linear_search, word=word)  # type: bool
+def test_Grid__linear_search(benchmark, word: str, expected: bool) -> None:
+    result = benchmark(GRID_INSTANCE._linear_search, word=word)  # type: bool
 
     assert result == expected
 
 
 @mark.parametrize("word, expected", WORDS_MAP.items())
-def test_Grid_multiprocess_search(benchmark, word: str, expected: bool) -> None:
-    result = benchmark(GRID_INSTANCE.multiprocess_search, word=word)  # type: bool
+def test_Grid__multiprocess_search(benchmark, word: str, expected: bool) -> None:
+    result = benchmark(GRID_INSTANCE._multiprocess_search, word=word)  # type: bool
+
+    assert result == expected
+
+
+@mark.parametrize("word, expected", WORDS_MAP.items())
+def test_Grid___contains__(benchmark, word: str, expected: bool) -> None:
+    result = benchmark(GRID_INSTANCE.__contains__, word=word)  # type: bool
 
     assert result == expected
