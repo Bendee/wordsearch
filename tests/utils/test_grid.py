@@ -19,37 +19,37 @@ AXES_INFO = {
 }  # type: AxesInfo
 
 
-def test_share_axes(benchmark) -> None:
+def test__share_axes(benchmark) -> None:
     benchmark(_share_axes, axes_info=AXES_INFO)
 
 
 @mark.parametrize('word, expected', WINDOW_WORDS.items())
-def test_contains_word(benchmark, word: str, expected: bool) -> None:
+def test__contains_word(benchmark, word: str, expected: bool) -> None:
     _share_axes(AXES_INFO)
     result = benchmark(_contains_word, word=word, search_index=100)  # type: bool
     assert result == expected
 
 
-def test__generate_rows(benchmark) -> None:
+def test_Grid__generate_rows(benchmark) -> None:
     benchmark(GRID_INSTANCE._generate_rows, grid=GRID)
 
 
-def test__generate_columns(benchmark) -> None:
+def test_Grid__generate_columns(benchmark) -> None:
     benchmark(GRID_INSTANCE._generate_columns)
 
 
 @mark.parametrize('axes', (GRID_INSTANCE.rows, GRID_INSTANCE.columns))
-def test__share_axes(benchmark, axes: 'Axes') -> None:
+def test_Grid__share_axes(benchmark, axes: 'Axes') -> None:
     benchmark(GRID_INSTANCE._share_axes, axes=axes)
 
 
 @mark.parametrize('word, expected', WORDS_MAP.items())
-def test_linear_search(benchmark, word: str, expected: bool) -> None:
+def test_Grid_linear_search(benchmark, word: str, expected: bool) -> None:
     result = benchmark(GRID_INSTANCE.linear_search, word=word)  # type: bool
     assert result == expected
 
 
 @mark.parametrize("word, expected", WORDS_MAP.items())
-def test_multiprocess_search(benchmark, word: str, expected: bool) -> None:
+def test_Grid_multiprocess_search(benchmark, word: str, expected: bool) -> None:
     result = benchmark(GRID_INSTANCE.multiprocess_search, word=word)  # type: bool
     assert result == expected
