@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 from pytest import mark, raises
 
-from utils.grid import Grid, GridWorker
+from utils.grid import Grid, _GridWorker
 
 from tests.data import GRID, ROW_LENGTH, WINDOW_SIZE, WORDS_MAP, WINDOW_WORDS
 
@@ -20,14 +20,14 @@ SHARED_AXES = tuple(
 )  # type: Tuple[Axes, ...]
 
 
-def test_GridWorker_contains_word_unshared() -> None:
-    worker = GridWorker()  # type: GridWorker
+def test__GridWorker_contains_word_unshared() -> None:
+    worker = _GridWorker()  # type: _GridWorker
     with raises(RuntimeError):
         worker.contains_word(word='test', search_index=100)
 
 
-def test_GridWorker_share_data(benchmark) -> None:
-    worker = GridWorker()  # type: GridWorker
+def test__GridWorker_share_data(benchmark) -> None:
+    worker = _GridWorker()  # type: _GridWorker
     benchmark(
         worker.share_data,
         rows=GRID_INSTANCE._shared_rows,
@@ -40,8 +40,8 @@ def test_GridWorker_share_data(benchmark) -> None:
 
 
 @mark.parametrize('word, expected', WINDOW_WORDS.items())
-def test_GridWorker_contains_word(benchmark, word: str, expected: bool) -> None:
-    worker = GridWorker()  # type: GridWorker
+def test__GridWorker_contains_word(benchmark, word: str, expected: bool) -> None:
+    worker = _GridWorker()  # type: _GridWorker
     worker.share_data(
         GRID_INSTANCE._shared_rows,
         GRID_INSTANCE._shared_columns,

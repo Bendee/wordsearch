@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     Range = Tuple[int, int]
 
 
-class TrieDict(dict):
+class _TrieDict(dict):
 
     def add_children(self, children: 'Grid') -> None:
         """ Recursively add an array of children. """
@@ -32,27 +32,27 @@ class TrieDict(dict):
         character_string = character.decode('utf-8')
 
         try:
-            node = self[character_string]  # type: TrieDict
+            node = self[character_string]  # type: _TrieDict
         except KeyError:
-            node = TrieDict()  # type: TrieDict
+            node = _TrieDict()  # type: _TrieDict
 
         node.add_children(children)
 
         self[character_string] = node
 
-    def __or__(self, other: 'TrieDict') -> 'TrieDict':
+    def __or__(self, other: '_TrieDict') -> '_TrieDict':
         """ Merge two TrieDicts.
 
         Keeps the structure of both intact.
         """
         both = self.keys() & other.keys()  # type: Set[str]
         for child in both:
-            node = self[child] | other[child]  # type: TrieDict
+            node = self[child] | other[child]  # type: _TrieDict
             self[child] = node
 
         unique = other.keys() - both  # type: Set[str]
         for child in unique:
-            node = other[child]  # type: TrieDict
+            node = other[child]  # type: _TrieDict
             self[child] = node
 
         return self
@@ -69,7 +69,7 @@ class TrieDict(dict):
             return False
 
 
-class TrieWorker:
+class _TrieWorker:
     _grid = None  # type: Optional[SharedGridArray]
     _shape = None  # type: Optional[GridShape]
     _dtype = None  # type: Optional[GridDType]
@@ -96,7 +96,7 @@ class TrieWorker:
         cls._max_word_length = max_word_length
 
     @classmethod
-    def iterate_window(cls, ranges: 'Range') -> 'TrieDict':
+    def iterate_window(cls, ranges: 'Range') -> '_TrieDict':
         """Iterate through a given range and generate a Trie for that range. """
         none_attrs = (
             attr is None
@@ -110,7 +110,7 @@ class TrieWorker:
         grid = frombuffer(cls._grid, dtype=cls._dtype).reshape(cls._shape)  # type: Grid
 
         x, y = ranges
-        node = TrieDict()  # type: TrieDict
+        node = _TrieDict()  # type: _TrieDict
         for i in range(x, x + cls._window_size):
             for j in range(y, y + cls._window_size):
                 node.add_children(
@@ -165,14 +165,14 @@ class Trie:
 
     def _fill_trie(self, window_size: int, max_word: int) -> None:
         """ Fill the trie with the possible words from the grid. """
-        self._root = TrieDict()  # type: TrieDict
+        self._root = _TrieDict()  # type: _TrieDict
 
         window_ranges = list(product(
             range(0, self._axis_length, window_size),
             range(0, self._axis_length, window_size),
         ))  # List[Range]
 
-        worker = TrieWorker()  # type: TrieWorker
+        worker = _TrieWorker()  # type: _TrieWorker
         worker.share_data(
             self._grid,
             self._shape,

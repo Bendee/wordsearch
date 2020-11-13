@@ -4,7 +4,7 @@ from ctypes import Array
 from numpy import ndarray, asarray
 from pytest import mark, raises
 
-from utils.trie import Trie, TrieDict, TrieWorker
+from utils.trie import Trie, _TrieDict, _TrieWorker
 
 from tests.data import (
     GRID,
@@ -40,47 +40,47 @@ POOL = FakePool(10)  # type: FakePool
 RANGES = range(0, TRIE_INSTANCE._axis_length, WINDOW_SIZE)  # type: range
 
 
-trie_instance = TrieDict()  # type: TrieDict
+trie_instance = _TrieDict()  # type: _TrieDict
 @mark.parametrize('array, expected', TRIES)
-def test_TrieDict_add_children(benchmark, array: 'List[str]', expected: 'Dict[str, Any]') -> None:
+def test__TrieDict_add_children(benchmark, array: 'List[str]', expected: 'Dict[str, Any]') -> None:
     benchmark(trie_instance.add_children, children=_make_np_array(array))
 
     assert trie_instance == expected
 
 
-trie_instance = TrieDict()  # type: TrieDict
+trie_instance = _TrieDict()  # type: _TrieDict
 @mark.parametrize('array, expected', TRIES)
-def test_TrieDict__add_child(benchmark, array: 'List[str]', expected: 'Dict[str, Any]') -> None:
+def test__TrieDict__add_child(benchmark, array: 'List[str]', expected: 'Dict[str, Any]') -> None:
     np = _make_np_array(array)  # type: Grid
     benchmark(trie_instance._add_child, child=np[0], children=np[1:])
 
     assert trie_instance == expected
 
 
-def test_TrieDict___or__(benchmark) -> None:
-    trie1, trie2 = TrieDict(), TrieDict()
+def test__TrieDict___or__(benchmark) -> None:
+    trie1, trie2 = _TrieDict(), _TrieDict()
     trie1.add_children(_make_np_array(TRIES[0][0]))
     trie2.add_children(_make_np_array(TRIES[1][0]))
-    result = benchmark(trie1.__or__, other=trie2)  # type: TrieDict
+    result = benchmark(trie1.__or__, other=trie2)  # type: _TrieDict
 
     assert result == TRIES[1][1]
 
 
 @mark.parametrize('word, expected', WORDS_MAP.items())
-def test_TrieDict___contains__(benchmark, word: str, expected: bool) -> None:
+def test__TrieDict___contains__(benchmark, word: str, expected: bool) -> None:
     result = benchmark(TRIE_INSTANCE._root.__contains__, word=list(word))  # type: bool
 
     assert result == expected
 
 
-def test_TrieWorker_iterate_window_unshared() -> None:
-    worker = TrieWorker()  # type: TrieWorker
+def test__TrieWorker_iterate_window_unshared() -> None:
+    worker = _TrieWorker()  # type: _TrieWorker
     with raises(RuntimeError):
         worker.iterate_window(ranges=(10, 10))
 
 
-def test_TrieWorker_share_data(benchmark) -> None:
-    worker = TrieWorker()  # type: TrieWorker
+def test__TrieWorker_share_data(benchmark) -> None:
+    worker = _TrieWorker()  # type: _TrieWorker
     benchmark(
         worker.share_data,
         grid=TRIE_INSTANCE._grid,
@@ -99,9 +99,9 @@ def test_TrieWorker_share_data(benchmark) -> None:
     assert worker._grid == TRIE_INSTANCE._grid
 
 
-def test_TrieWorker_iterate_window(benchmark) -> None:
-    worker = TrieWorker()  # type: TrieWorker
-    result = benchmark(worker.iterate_window, ranges=(10, 10))  # type: TrieDict
+def test__TrieWorker_iterate_window(benchmark) -> None:
+    worker = _TrieWorker()  # type: _TrieWorker
+    result = benchmark(worker.iterate_window, ranges=(10, 10))  # type: _TrieDict
 
     assert result == TRIE_NODE
 

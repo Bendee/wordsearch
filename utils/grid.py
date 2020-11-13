@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     Axes = Tuple[str, ...]
 
 
-class GridWorker:
+class _GridWorker:
     _axes = None  # type: Optional[Tuple[Axes, ...]]
     _window_size = None  # type: Optional[int]
 
@@ -98,7 +98,7 @@ class Grid:
 
     def multiprocess_search(self, word: str) -> bool:
         """ Checks for word presence using multiple processes. """
-        worker = GridWorker()  # type: GridWorker
+        worker = _GridWorker()  # type: _GridWorker
         worker.share_data(
             self._shared_rows,
             self._shared_columns,
