@@ -87,8 +87,7 @@ class Grid:
         return False
 
     def multiprocess_search(self, word: str) -> bool:
-        """ Splits axes up and checks for word presence using multiple processes. """
-        print(self._window_size)
+        """ Checks for word presence using multiple processes. """
         axes_info = {
             'rows': self._shared_rows,
             'columns': self._shared_columns,

@@ -17,13 +17,29 @@ MAX_WORD_LENGTH = 24  # type: int
 
 class WordSearch(object):
 
-    def __init__(self, grid: str, use_trie: bool = False, axis_length: int = ROW_LENGTH, window_size: int = WINDOW_SIZE, max_word: int = MAX_WORD_LENGTH) -> None:
+    def __init__(
+                self,
+                grid: str,
+                use_trie: bool = False,
+                axis_length: int = ROW_LENGTH,
+                window_size: int = WINDOW_SIZE,
+                max_word: int = MAX_WORD_LENGTH
+            ) -> None:
         self._cache = {}  # type: Dict[str, bool]
         self._use_trie = use_trie  # type: bool
         if self._use_trie:
-            self._data = Trie(grid, axis_length, window_size, max_word)  # type: Union[Grid, Trie]
+            self._data = Trie(
+                grid,
+                axis_length,
+                window_size,
+                max_word,
+            )  # type: Union[Grid, Trie]
         else:
-            self._data = Grid(grid, axis_length, window_size)  # type: Union[Grid, Trie]
+            self._data = Grid(
+                grid,
+                axis_length,
+                window_size,
+            )  # type: Union[Grid, Trie]
 
     def is_present(self, word: str, use_multiprocess: bool = False) -> bool:
         """ Checks if word is present in grid. """

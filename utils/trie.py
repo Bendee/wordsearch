@@ -109,7 +109,13 @@ def _iterate_window(ranges: 'Range') -> 'TrieDict':
 
 class Trie:
 
-    def __init__(self, grid: str, axis_length: int, window_size: int, max_word: int) -> None:
+    def __init__(
+                self,
+                grid: str,
+                axis_length: int,
+                window_size: int,
+                max_word: int
+            ) -> None:
         self._axis_length = axis_length  # type: int
         self._shape = (axis_length,)*2  # type: GridShape
         self._dtype = (c_char, (1,))  # type: GridDType
@@ -165,7 +171,11 @@ class Trie:
         with Pool(initializer=_init_window, initargs=(grid_info,)) as pool:
             chunk_size = self._calculate_chunksize(pool, window_ranges)  # type: int
 
-            for node in pool.imap_unordered(_iterate_window, window_ranges, chunksize=chunk_size):
+            for node in pool.imap_unordered(
+                        _iterate_window,
+                        window_ranges,
+                        chunksize=chunk_size
+                    ):
                 i += 1
 
                 print('Merging node:', i, end='\r')
@@ -175,7 +185,11 @@ class Trie:
 
         pool.join()
 
-    def _calculate_chunksize(self, pool: 'PoolType', ranges: 'List[Range]') -> int:
+    def _calculate_chunksize(
+                self,
+                pool: 'PoolType',
+                ranges: 'List[Range]'
+            ) -> int:
         """ Calculate the chunk size to use for batching processes. """
         chunk_size, extra = divmod(len(ranges), len(pool._pool) * 4)
         if extra:
