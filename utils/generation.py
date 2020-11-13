@@ -1,15 +1,19 @@
 from typing import TYPE_CHECKING
+from argparse import ArgumentParser
 from json import dump
 from math import sqrt
 from random import choice, randrange, sample, shuffle
 from string import ascii_lowercase
-from sys import argv
 
 from utils import Grid, read_grid
 
 
 if TYPE_CHECKING:
     from typing import Dict, List
+    from argparse import (
+        _SubParsersAction as SubParsers,
+        Namespace as ParsedArguments,
+    )
 
 
 def create_grid(length: int) -> str:
@@ -51,11 +55,11 @@ def generate_words(grid_string: str, amount: int) -> 'Dict[str, bool]':
     return words
 
 
-def write_words(path: str, amount: int, grid: str, presence: bool) -> None:
+def write_words(path: str, amount: int, grid: str, json: bool) -> None:
     """ Writes the list of words to a file. """
     words = generate_words(grid, amount)  # type: Dict[str, bool]
     with open(path, 'w') as file:
-        if presence:
+        if json:
             dump(words, file)
         else:
             words_list = list(words.keys())  # type: List[str]
@@ -65,23 +69,56 @@ def write_words(path: str, amount: int, grid: str, presence: bool) -> None:
                 file.write(word + '\n')
 
 
+def parse_grid(arguments: 'ParsedArguments') -> None:
+    write_grid(arguments.path, arguments.size)
+
+
+def parse_words(arguments: 'ParsedArguments') -> None:
+    write_words(
+        arguments.path,
+        arguments.amount,
+        read_grid(arguments.grid),
+        arguments.json,
+    )
+
 if __name__ == '__main__':
-    if len(argv) != 0:
-        command, path, *args = argv[1:]
-        if command == 'grid':
-            write_grid(path, int(args[0]))
-        elif command == 'words':
-            try:
-                length = int(args[1])
-                grid = create_grid(length)
-            except ValueError:
-                grid = read_grid(args[1])
+    parser = ArgumentParser(
+        description='Create grids and words to use with wordsearch',
+    )  # type: ArgumentParser
+    subparsers = parser.add_subparsers()  # type: SubParsers
 
-            try:
-                presence = bool(args[0])
-            except IndexError:
-                presence = False
+    grid_parser = subparsers.add_parser('grid')  # type: ArgumentParser
+    grid_parser.add_argument(
+        'path',
+        help='Location at which to store generated grid',
+    )
+    grid_parser.add_argument(
+        'size',
+        type=int,
+        help='Size of the generated grid',
+    )
+    grid_parser.set_defaults(function=parse_grid)
 
-            write_words(path, int(args[0]), grid, presence)
-        else:
-            raise RuntimeError('{} is not a valid command'.format(command))
+    words_parser = subparsers.add_parser('words')  # type: ArgumentParser
+    words_parser.add_argument(
+        'path',
+        help='Location at which to store generated words',
+    )
+    words_parser.add_argument(
+        'amount',
+        type=int,
+        help='The amount of words to generate',
+    )
+    words_parser.add_argument(
+        'grid',
+        help='The grid to retrieve the words from.',
+    )
+    words_parser.add_argument(
+        '--json',
+        help='Whether to store words with their presence in json form.',
+        action='store_true',
+    )
+    words_parser.set_defaults(function=parse_words)
+
+    arguments = parser.parse_args()  # type: ParsedArguments
+    arguments.function(arguments)

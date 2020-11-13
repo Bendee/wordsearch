@@ -1,13 +1,13 @@
 #! /usr/bin/env python3
 from typing import TYPE_CHECKING
-from getopt import getopt, GetoptError
-from sys import argv
+from argparse import ArgumentParser
 
 from utils import Grid, read_grid, read_words, Trie
 
 
 if TYPE_CHECKING:
     from typing import Dict, List, Union
+    from argparse import Namespace as ParsedArguments
 
 
 ROW_LENGTH = 10000 # type: int
@@ -58,23 +58,25 @@ class WordSearch(object):
 
 
 if __name__ == "__main__":
-    try:
-        options, args = getopt(argv[1:], 'h', ['grid=', 'words='])
-    except GetoptError as e:
-        raise RuntimeError from e
-    if len(options) == 0:
-        raise RuntimeError
-    for option, argument in options:
-        if option == '-h':
-            pass
-            exit()
-        elif option == '--grid':
-            grid = read_grid(argument)  # type: str
+    parser = ArgumentParser(
+        description='Check presence of words in a given grid',
+    )  # type: ArgumentParser
 
-        if option  == '--words':
-            words_to_find = read_words(argument)  # type: List[str]
+    parser.add_argument(
+        'grid',
+        help='The file containing the grid of words',
+    )
+    parser.add_argument(
+        'words',
+        help='The list of words to check'
+    )
 
-    ws = WordSearch(grid)  # type: WordSearch
+    arguments = parser.parse_args()  # type: ParsedArguments
+
+    grid = read_grid(arguments.grid)  # type: str
+    words_to_find = read_words(arguments.words)  # type: List[str]
+
+    ws = WordSearch(arguments.grid)  # type: WordSearch
 
     for word in words_to_find:
         if ws.is_present(word):
