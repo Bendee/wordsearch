@@ -91,5 +91,5 @@ if __name__ == "__main__":
     )  # type: WordSearch
 
     for word in words_to_find:
-        if ws.is_present(word, use_multiprocess=arguments.multiprocess):
+        if ws.is_present(word):
             print("found {}".format(word))
