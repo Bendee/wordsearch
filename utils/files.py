@@ -4,23 +4,24 @@ from string import ascii_lowercase
 
 if TYPE_CHECKING:
     from typing import List
+    from pathlib import Path
 
 
-def read_grid(path: str) -> str:
+def read_grid(path: 'Path') -> str:
     """ Read grid from file. """
     grid = ''  # type: str
-    with open(path, "r") as file:
+    with path.open('r') as file:
         for line in file:
             grid += ''.join(filter(lambda x: x in ascii_lowercase, line))
 
     return grid
 
 
-def read_words(path: str) -> 'List[str]':
+def read_words(path: 'Path') -> 'List[str]':
     """ Read words from file. """
     words = []  # type: List[str]
 
-    with open(path, "r") as file:
+    with path.open('r') as file:
         for line in file:
             words.append(line.strip())
 

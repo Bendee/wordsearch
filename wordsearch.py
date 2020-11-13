@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 from typing import TYPE_CHECKING
 from argparse import ArgumentParser
+from pathlib import Path
 
 from utils import Grid, read_grid, read_words, Trie
 
@@ -64,10 +65,12 @@ if __name__ == "__main__":
 
     parser.add_argument(
         'grid',
+        type=Path,
         help='The file containing the grid of words',
     )
     parser.add_argument(
         'words',
+        type=Path,
         help='The list of words to check'
     )
 

@@ -2,10 +2,12 @@ from typing import TYPE_CHECKING
 from argparse import ArgumentParser
 from json import dump
 from math import sqrt
+from pathlib import Path
 from random import choice, randrange, sample, shuffle
 from string import ascii_lowercase
 
-from utils import Grid, read_grid
+from utils.files import read_grid
+from utils.grid import Grid
 
 
 if TYPE_CHECKING:
@@ -21,11 +23,11 @@ def create_grid(length: int) -> str:
     return ''.join(choice(ascii_lowercase) for _ in range(length**2))
 
 
-def write_grid(path: str, length: int) -> None:
+def write_grid(path: Path, length: int) -> None:
     """ Write a random grid to a file. """
     grid = create_grid(length)  # type: str
 
-    with open(path, "w") as file:
+    with path.open('w') as file:
         for i in range(length):
             file.write(grid[i*length:(i+1)*length] + '\n')
 
@@ -55,10 +57,10 @@ def generate_words(grid_string: str, amount: int) -> 'Dict[str, bool]':
     return words
 
 
-def write_words(path: str, amount: int, grid: str, json: bool) -> None:
+def write_words(path: Path, amount: int, grid: str, json: bool) -> None:
     """ Writes the list of words to a file. """
     words = generate_words(grid, amount)  # type: Dict[str, bool]
-    with open(path, 'w') as file:
+    with path.open('w') as file:
         if json:
             dump(words, file)
         else:
@@ -90,6 +92,7 @@ if __name__ == '__main__':
     grid_parser = subparsers.add_parser('grid')  # type: ArgumentParser
     grid_parser.add_argument(
         'path',
+        type=Path,
         help='Location at which to store generated grid',
     )
     grid_parser.add_argument(
@@ -102,6 +105,7 @@ if __name__ == '__main__':
     words_parser = subparsers.add_parser('words')  # type: ArgumentParser
     words_parser.add_argument(
         'path',
+        type=Path,
         help='Location at which to store generated words',
     )
     words_parser.add_argument(
@@ -111,6 +115,7 @@ if __name__ == '__main__':
     )
     words_parser.add_argument(
         'grid',
+        type=Path,
         help='The grid to retrieve the words from.',
     )
     words_parser.add_argument(
