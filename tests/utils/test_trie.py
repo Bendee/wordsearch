@@ -52,7 +52,7 @@ trie_instance = _TrieDict()  # type: _TrieDict
 @mark.parametrize('array, expected', TRIES)
 def test__TrieDict__add_child(benchmark, array: 'List[str]', expected: 'Dict[str, Any]') -> None:
     np = _make_np_array(array)  # type: Grid
-    benchmark(trie_instance._add_child, child=np[0], children=np[1:])
+    benchmark(trie_instance._add_child, character=np[0], children=np[1:])
 
     assert trie_instance == expected
 

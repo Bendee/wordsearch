@@ -1,11 +1,12 @@
 from typing import TYPE_CHECKING
 from argparse import ArgumentParser
-from json import dump
+from json import dump, load
 from math import sqrt
 from pathlib import Path
 from random import choice, randrange, sample, shuffle
 from string import ascii_lowercase
 
+from wordsearch import MAX_WORD_LENGTH
 from utils.files import read_grid
 from utils.grid import Grid
 
@@ -47,7 +48,7 @@ def generate_words(grid_string: str, amount: int) -> 'Dict[str, bool]':
         index = randrange(length)  # type: int
 
         in_word = axis[
-            index:index + randrange(5, max(12, min(24, (length - index))))
+            index:index + randrange(1, min(MAX_WORD_LENGTH, (length - index)))
         ]  # type: str
         words[in_word] = True
 
@@ -60,9 +61,14 @@ def generate_words(grid_string: str, amount: int) -> 'Dict[str, bool]':
 def write_words(path: Path, amount: int, grid: str, json: bool) -> None:
     """ Writes the list of words to a file. """
     words = generate_words(grid, amount)  # type: Dict[str, bool]
+    if json:
+        with path.open('r') as file:
+            all_json = load(file)
+
     with path.open('w') as file:
         if json:
-            dump(words, file)
+            all_json['all'] = words
+            dump(all_json, file)
         else:
             words_list = list(words.keys())  # type: List[str]
             words_list.extend(sample(words_list, len(words_list)//3))
