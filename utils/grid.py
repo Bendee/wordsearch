@@ -5,41 +5,51 @@ from multiprocessing import Pool, RawArray
 
 
 if TYPE_CHECKING:
-    from typing import List, Tuple
-    from typing_extensions import TypedDict
+    from typing import Iterator, List, Optional, Tuple
     from ctypes import Array
 
     SharedAxes = Array[c_wchar_p]
     Axes = Tuple[str, ...]
-    AxesInfo = TypedDict(
-        'AxesInfo',
-        {
-            'rows': SharedAxes,
-            'columns': SharedAxes,
-            'window': int,
-        },
-    )
 
 
-def _share_axes(axes_info: 'AxesInfo') -> None:
-    """ Load axes from memory and share them with workers """
-    global axes, window_size
-    axes = tuple(
-        tuple(axis)
-        for axis in (axes_info.get('rows'), axes_info.get('columns'))
-    )  # type: Tuple[Axes, ...]
-    window_size = axes_info.get('window')  # type: int
+class GridWorker:
+    _axes = None  # type: Optional[Tuple[Axes, ...]]
+    _window_size = None  # type: Optional[int]
 
+    @classmethod
+    def test(cls):
+        print(dir(cls))
 
-def _contains_word(word: str, search_index: int) -> bool:
-    """ Check if word is contained in axes."""
-    global axes, window_size
-    for axis in axes:
-        for index in range(search_index, search_index + window_size):
-            if word in axis[index]:
-                return True
+    @classmethod
+    def share_data(
+                cls,
+                rows: 'SharedAxes',
+                columns: 'SharedAxes',
+                window_size: int
+            ) -> None:
+        """ Share data with workers."""
+        cls._axes = tuple(
+            tuple(axis)
+            for axis in (rows, columns)
+        )
+        cls._window_size = window_size
 
-    return False
+    @classmethod
+    def contains_word(cls, word: str, search_index: int) -> bool:
+        """ Check if word is contained in axes. """
+        none_attrs = (
+            attr is None
+            for attr in (cls._axes, cls._window_size)
+        )  # type: Iterator[bool]
+        if any(none_attrs):
+            raise RuntimeError('Data has not been shared with workers')
+
+        for axis in cls._axes:
+            for index in range(search_index, search_index + cls._window_size):
+                if word in axis[index]:
+                    return True
+
+        return False
 
 
 class Grid:
@@ -88,15 +98,16 @@ class Grid:
 
     def multiprocess_search(self, word: str) -> bool:
         """ Checks for word presence using multiple processes. """
-        axes_info = {
-            'rows': self._shared_rows,
-            'columns': self._shared_columns,
-            'window': self._window_size,
-        }  # type: AxesInfo
+        worker = GridWorker()  # type: GridWorker
+        worker.share_data(
+            self._shared_rows,
+            self._shared_columns,
+            self._window_size,
+        )
 
-        with Pool(initializer=_share_axes, initargs=(axes_info,)) as pool:
+        with Pool() as pool:
             results = pool.starmap(
-                _contains_word,
+                worker.contains_word,
                 product(
                     (word,),
                     range(0, self._axis_length, self._window_size),
