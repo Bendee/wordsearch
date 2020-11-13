@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, List
+    from typing import Any, Dict, List, Union
     from typing_extensions import TypedDict
 
     WordMap = Dict[str, bool]
@@ -53,3 +53,9 @@ WORDS_MAP = _WORDS_MAPS['all']  # type: WordMap
 WINDOW_WORDS = _WORDS_MAPS['index_100']  # type: WordMap
 
 TRIE_NODE = _load_json(_TRIE_JSON)  # type: Dict[str, Any]
+
+TRIES = [
+    [['a', 'b', 'c'], {'a': {'b': {'c': {}}}}],
+    [['b', 'c'], {'a': {'b': {'c': {}}}, 'b': {'c': {}}}],
+    [['a', 'b', 'd'], {'a': {'b': {'c': {}, 'd': {}}}, 'b': {'c': {}}}],
+]  # type: List[List[Union[List[str], Dict[str, Any]]]]

@@ -24,6 +24,39 @@ GRID_INFO = {
 }  # type: GridInfo
 
 
+def _make_np_array(array: 'List[str]') -> 'Grid':
+    return asarray(array, dtype=TRIE_INSTANCE._dtype).flatten()  # type: Grid
+
+
+trie_instance = TrieDict()  # type: TrieDict
+@mark.parametrize('array, expected', TRIES)
+def test_TrieDict_add_children(benchmark, array: 'List[str]', expected: 'Dict[str, Any]') -> None:
+    benchmark(trie_instance.add_children, children=_make_np_array(array))
+    assert trie_instance == expected
+
+
+trie_instance = TrieDict()  # type: TrieDict
+@mark.parametrize('array, expected', TRIES)
+def test_TrieDict_add_child(benchmark, array: 'List[str]', expected: 'Dict[str, Any]') -> None:
+    np = _make_np_array(array)  # type: Grid
+    benchmark(trie_instance.add_child, child=np[0], children=np[1:])
+    assert trie_instance == expected
+
+
+def test_TrieDict___or__(benchmark) -> None:
+    trie1, trie2 = TrieDict(), TrieDict()
+    trie1.add_children(_make_np_array(TRIES[0][0]))
+    trie2.add_children(_make_np_array(TRIES[1][0]))
+    result = benchmark(trie1.__or__, other=trie2)  # type: TrieDict
+    assert result == TRIES[1][1]
+
+
+@mark.parametrize('word, expected', WORDS_MAP.items())
+def test_TrieDict___contains__(benchmark, word: str, expected: bool) -> None:
+    result = benchmark(TRIE_INSTANCE._root.__contains__, word=list(word))  # type: bool
+    assert result == expected
+
+
 def test__init_window(benchmark) -> None:
     benchmark(_init_window, grid_info=GRID_INFO)
 
