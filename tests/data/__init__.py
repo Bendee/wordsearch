@@ -52,10 +52,7 @@ _WORDS_MAPS = _load_json(_WORDS_JSON)  # type: WordsMaps
 WORDS_MAP = _WORDS_MAPS['all']  # type: WordMap
 WINDOW_WORDS = _WORDS_MAPS['index_100']  # type: WordMap
 
-TRIE_NODE = _load_json(_TRIE_JSON)  # type: Dict[str, Any]
-
-TRIES = [
-    [['a', 'b', 'c'], {'a': {'b': {'c': {}}}}],
-    [['b', 'c'], {'a': {'b': {'c': {}}}, 'b': {'c': {}}}],
-    [['a', 'b', 'd'], {'a': {'b': {'c': {}, 'd': {}}}, 'b': {'c': {}}}],
-]  # type: List[List[Union[List[str], Dict[str, Any]]]]
+_TRIES = _load_json(_TRIE_JSON)
+TRIE_NODE = _TRIES['node']  # type: Dict[str, Any]
+GRID_TRIE = _TRIES['grid']  # type: Dict[str, Any]
+TRIES = _TRIES['tries']  # type: List[List[Union[List[str], Dict[str, Any]]]]

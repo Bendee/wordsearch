@@ -8,6 +8,7 @@ from utils.trie import Trie, _TrieDict, _TrieWorker
 
 from tests.data import (
     GRID,
+    GRID_TRIE,
     ROW_LENGTH,
     TRIES,
     TRIE_NODE,
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
     from utils.trie import SharedGridArray, Grid
 
 
-TRIE_INSTANCE = Trie(GRID, ROW_LENGTH, WINDOW_SIZE, MAX_WORD_LENGTH)  # type: Trie
+TRIE_INSTANCE = Trie(GRID, ROW_LENGTH, WINDOW_SIZE, MAX_WORD_LENGTH, True)  # type: Trie
 
 
 class FakePool:
@@ -119,8 +120,23 @@ def test_Trie__format_grid(benchmark) -> None:
     assert isinstance(result, ndarray)
 
 
-def test_Trie_fill_trie(benchmark) -> None:
-    benchmark(TRIE_INSTANCE._fill_trie, window_size=WINDOW_SIZE, max_word=MAX_WORD_LENGTH)
+def test_Trie__non_linear_fill(benchmark) -> None:
+    result = benchmark(
+        TRIE_INSTANCE._non_linear_fill,
+        window_size=WINDOW_SIZE,
+        max_word=MAX_WORD_LENGTH,
+    )  # type: _TrieDict
+
+    assert result == GRID_TRIE
+
+
+def test_Trie__linear_fill(benchmark) -> None:
+    result = benchmark(
+        TRIE_INSTANCE._linear_fill,
+        max_word=MAX_WORD_LENGTH,
+    )  # type: _TrieDict
+
+    assert result == GRID_TRIE
 
 
 def test_Trie__calculate_chunks(benchmark) -> None:

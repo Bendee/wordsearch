@@ -130,7 +130,8 @@ class Trie:
                 grid: str,
                 axis_length: int,
                 window_size: int,
-                max_word: int
+                max_word: int,
+                multiprocessing: bool,
             ) -> None:
         self._axis_length = axis_length  # type: int
         self._shape = (axis_length,)*2  # type: GridShape
@@ -138,7 +139,13 @@ class Trie:
 
         self._grid = self._load_grid(grid)  # type: SharedGridArray
 
-        self._fill_trie(window_size, max_word)
+        print('Iterating through windows.')
+        print('WARNING: This can take a while!')
+        if multiprocessing:
+            self._root = self._non_linear_fill(window_size, max_word)
+        else:
+            self._root = self._linear_fill(max_word)
+        print('Done')
 
     def _load_grid(self, grid: str) -> 'SharedGridArray':
         """ Load the grid into shared memory. """
@@ -163,9 +170,9 @@ class Trie:
             count=size,
         ).reshape(self._shape)
 
-    def _fill_trie(self, window_size: int, max_word: int) -> None:
+    def _non_linear_fill(self, window_size: int, max_word: int) -> '_TrieDict':
         """ Fill the trie with the possible words from the grid. """
-        self._root = _TrieDict()  # type: _TrieDict
+        root = _TrieDict()  # type: _TrieDict
 
         window_ranges = list(product(
             range(0, self._axis_length, window_size),
@@ -183,8 +190,6 @@ class Trie:
         )
 
         i = 0
-        print('Iterating through windows.')
-        print('WARNING: This can take a while!')
         with Pool() as pool:
             chunk_size = self._calculate_chunksize(pool, window_ranges)  # type: int
 
@@ -196,11 +201,13 @@ class Trie:
                 i += 1
 
                 print('Merging node:', i, end='\r')
-                self._root = self._root | node
+                root = root | node
             print('.'*16, end='\r')
             print('Merging: Done')
 
         pool.join()
+
+        return root
 
     def _calculate_chunksize(
                 self,
@@ -213,6 +220,19 @@ class Trie:
             chunk_size += 1
 
         return chunk_size
+
+    def _linear_fill(self, max_word: int) -> '_TrieDict':
+        worker = _TrieWorker()  # type: _TrieWorker
+        worker.share_data(
+            self._grid,
+            self._shape,
+            self._dtype,
+            self._axis_length,
+            self._axis_length,
+            max_word,
+        )
+
+        return worker.iterate_window((0,0))
 
     def __contains__(self, word: str) -> bool:
         """ Check if the word is contained within the Trie. """

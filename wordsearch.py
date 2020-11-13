@@ -22,6 +22,7 @@ class WordSearch(object):
                 self,
                 grid: str,
                 use_trie: bool = False,
+                multiprocessing: bool = False,
                 axis_length: int = ROW_LENGTH,
                 window_size: int = WINDOW_SIZE,
                 max_word: int = MAX_WORD_LENGTH
@@ -34,6 +35,7 @@ class WordSearch(object):
                 axis_length,
                 window_size,
                 max_word,
+                multiprocessing,
             )  # type: Union[Grid, Trie]
         else:
             self._data = Grid(
@@ -89,7 +91,11 @@ if __name__ == "__main__":
     grid = read_grid(arguments.grid)  # type: str
     words_to_find = read_words(arguments.words)  # type: List[str]
 
-    ws = WordSearch(grid, use_trie=arguments.trie)  # type: WordSearch
+    ws = WordSearch(
+        grid,
+        use_trie=arguments.trie,
+        multiprocessing=arguments.multiprocess,
+    )  # type: WordSearch
 
     for word in words_to_find:
         if ws.is_present(word, use_multiprocess=arguments.multiprocess):
