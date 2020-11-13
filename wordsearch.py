@@ -73,14 +73,24 @@ if __name__ == "__main__":
         type=Path,
         help='The list of words to check'
     )
+    parser.add_argument(
+        '--trie',
+        help='Use trie data structure.',
+        action='store_true',
+    )
+    parser.add_argument(
+        '--multiprocess',
+        help='Use multiple processes to search for words. Does not affect Trie.',
+        action='store_true',
+    )
 
     arguments = parser.parse_args()  # type: ParsedArguments
 
     grid = read_grid(arguments.grid)  # type: str
     words_to_find = read_words(arguments.words)  # type: List[str]
 
-    ws = WordSearch(arguments.grid)  # type: WordSearch
+    ws = WordSearch(grid, use_trie=arguments.trie)  # type: WordSearch
 
     for word in words_to_find:
-        if ws.is_present(word):
+        if ws.is_present(word, use_multiprocess=arguments.multiprocess):
             print("found {}".format(word))
