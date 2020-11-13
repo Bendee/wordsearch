@@ -7,8 +7,7 @@ from numpy import fromstring, frombuffer, copyto
 
 
 if TYPE_CHECKING:
-    from typing import List, Set, Tuple, Type
-    from typing_extensions import TypedDict
+    from typing import Iterator, List, Optional, Set, Tuple, Type
     from ctypes import Array, _CDataMeta as CType
     from multiprocessing.pool import Pool as PoolType
 
@@ -19,17 +18,6 @@ if TYPE_CHECKING:
     GridShape = Tuple[int, int]
     Grid = Type[ndarray]
     Range = Tuple[int, int]
-    GridInfo = TypedDict(
-        'GridInfo',
-        {
-            'grid': SharedGridArray,
-            'shape': GridShape,
-            'dtype': GridDType,
-            'window': int,
-            'axis': int,
-            'max': int,
-        },
-    )
 
 
 class TrieDict(dict):
@@ -37,9 +25,9 @@ class TrieDict(dict):
     def add_children(self, children: 'Grid') -> None:
         """ Recursively add an array of children. """
         if children.size != 0:
-            self.add_child(children[0], children[1:])
+            self._add_child(children[0], children[1:])
 
-    def add_child(self, character: bytes, children: 'Grid') -> None:
+    def _add_child(self, character: bytes, children: 'Grid') -> None:
         """ Add a child and its children. """
         character_string = character.decode('utf-8')
 
@@ -81,30 +69,58 @@ class TrieDict(dict):
             return False
 
 
-def _init_window(grid_info: 'GridInfo') -> None:
-    """ Share the constant variables with the workers via inheritance. """
-    global shared_grid, shape, dtype, window_size, axis_length, max_word
-    shared_grid = grid_info.get('grid')
-    shape = grid_info.get('shape')
-    dtype = grid_info.get('dtype')
-    window_size = grid_info.get('window')
-    axis_length = grid_info.get('axis')
-    max_word = grid_info.get('max')
+class TrieWorker:
+    _grid = None  # type: Optional[SharedGridArray]
+    _shape = None  # type: Optional[GridShape]
+    _dtype = None  # type: Optional[GridDType]
+    _window_size =  None  # type: Optional[int]
+    _axis_length = None  # type: Optional[int]
+    _max_word_length = None  # type: Optional[int]
 
+    @classmethod
+    def share_data(
+                cls,
+                grid: 'SharedGridArray',
+                shape: 'GridShape',
+                dtype: 'GridDType',
+                window_size: int,
+                axis_length: int,
+                max_word_length: int
+            ) -> None:
+        """ Share data with workers."""
+        cls._grid = grid
+        cls._shape = shape
+        cls._dtype = dtype
+        cls._window_size = window_size
+        cls._axis_length = axis_length
+        cls._max_word_length = max_word_length
 
-def _iterate_window(ranges: 'Range') -> 'TrieDict':
-    """Iterate through a given range and generate a Trie for that range. """
-    global shared_grid, shape, dtype, window_size, axis_length, max_word
-    grid = frombuffer(shared_grid, dtype=dtype).reshape(shape)  # type: Grid
+    @classmethod
+    def iterate_window(cls, ranges: 'Range') -> 'TrieDict':
+        """Iterate through a given range and generate a Trie for that range. """
+        none_attrs = (
+            attr is None
+            for attr in (cls._grid, cls._shape, cls._dtype, cls._window_size,
+                         cls._axis_length, cls._max_word_length,
+                         )
+        )  # type: Iterator[bool]
+        if any(none_attrs):
+            raise RuntimeError('Data has not been shared with workers')
 
-    x, y = ranges
-    node = TrieDict()  # type: TrieDict
-    for i in range(x, x + window_size):
-        for j in range(y, y + window_size):
-            node.add_children(grid[i, j:min(axis_length, j + max_word)])
-            node.add_children(grid[i:min(axis_length, i + max_word), j])
+        grid = frombuffer(cls._grid, dtype=cls._dtype).reshape(cls._shape)  # type: Grid
 
-    return node
+        x, y = ranges
+        node = TrieDict()  # type: TrieDict
+        for i in range(x, x + cls._window_size):
+            for j in range(y, y + cls._window_size):
+                node.add_children(
+                    grid[i, j:min(cls._axis_length, j + cls._max_word_length)]
+                )
+                node.add_children(
+                    grid[i:min(cls._axis_length, i + cls._max_word_length), j]
+                )
+
+        return node
 
 
 class Trie:
@@ -156,23 +172,24 @@ class Trie:
             range(0, self._axis_length, window_size),
         ))  # List[Range]
 
-        grid_info = {
-            'grid': self._grid,
-            'shape': self._shape,
-            'dtype': self._dtype,
-            'window': window_size,
-            'axis': self._axis_length,
-            'max': max_word,
-        }  # type: GridInfo
+        worker = TrieWorker()  # type: TrieWorker
+        worker.share_data(
+            self._grid,
+            self._shape,
+            self._dtype,
+            window_size,
+            self._axis_length,
+            max_word,
+        )
 
         i = 0
         print('Iterating through windows.')
         print('WARNING: This can take a while!')
-        with Pool(initializer=_init_window, initargs=(grid_info,)) as pool:
+        with Pool() as pool:
             chunk_size = self._calculate_chunksize(pool, window_ranges)  # type: int
 
             for node in pool.imap_unordered(
-                        _iterate_window,
+                        worker.iterate_window,
                         window_ranges,
                         chunksize=chunk_size
                     ):
