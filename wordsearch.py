@@ -1,82 +1,44 @@
 #! /usr/bin/env python3
-# CLI Arguments
-from sys import argv
-from getopt import getopt, GetoptError
-
-from string import ascii_lowercase
 from typing import TYPE_CHECKING
+from getopt import getopt, GetoptError
+from sys import argv
+
+from utils import Grid, read_grid, read_words, Trie
 
 
 if TYPE_CHECKING:
-    from typing import Dict, List
+    from typing import Dict, List, Union
 
 
-ROW_LENGTH = 10000  # type: int
+ROW_LENGTH = 10000 # type: int
+WINDOW_SIZE = 500  # type: int
+MAX_WORD_LENGTH = 24  # type: int
 
 
 class WordSearch(object):
 
-    def __init__(self, grid: str, axis_length: int = ROW_LENGTH) -> None:
-        self._axis_length = axis_length  # type: int
+    def __init__(self, grid: str, use_trie: bool = False, axis_length: int = ROW_LENGTH, window_size: int = WINDOW_SIZE, max_word: int = MAX_WORD_LENGTH) -> None:
         self._cache = {}  # type: Dict[str, bool]
+        self._use_trie = use_trie  # type: bool
+        if self._use_trie:
+            self._data = Trie(grid, axis_length, window_size, max_word)  # type: Union[Grid, Trie]
+        else:
+            self._data = Grid(grid, axis_length, window_size)  # type: Union[Grid, Trie]
 
-        if len(grid) != self._axis_length**2:
-            raise RuntimeError("Not enough words!")
-
-        self.rows = self._generate_rows(grid)  # type: List[str]
-        self.columns = self._generate_columns()  # type: List[str]
-
-    def _generate_rows(self, grid: str) -> 'List[str]':
-        """ Split grid into rows. """
-        return [
-            grid[self._axis_length*row:self._axis_length*(row + 1)]
-            for row in range(self._axis_length)
-        ]
-
-    def _generate_columns(self) -> 'List[str]':
-        """ Transpose rows to get columns. """
-        return [
-            ''.join(column)
-            for column in zip(*self.rows)
-        ]
-
-    def _is_present(self, word: str) -> bool:
-        """ Iterates through rows and columns and checks for word presence. """
-        for row, column in zip(self.rows, self.columns):
-            if word in row:
-                return True
-            elif word in column:
-                return True
-        return False
-
-    def is_present(self, word: str) -> bool:
+    def is_present(self, word: str, use_multiprocess: bool = False) -> bool:
         """ Checks if word is present in grid. """
         if word not in self._cache:
-            present = self._is_present(word)
+            if self._use_trie:
+                present = word in self._data  # type: bool
+            else:
+                if use_multiprocess:
+                    present = self._data.multiprocess_search(word)  # type: bool
+                else:
+                    present = self._data.linear_search(word)  # type: bool
+
             self._cache[word] = present
 
         return self._cache[word]
-
-
-def read_grid(path: str) -> str:
-    """ Read grid from file. """
-    grid = ''  # type: str
-    with open(path, "r") as file:
-        for line in file:
-            grid += ''.join(filter(lambda x: x in ascii_lowercase, line))
-
-    return grid
-
-
-def read_words(path: str) -> 'List[str]':
-    """ Read words from file. """
-    words = []  # type: List[str]
-
-    with open(path, "r") as file:
-        for line in file:
-            words.append(line.strip())
-
-    return words
 
 
 if __name__ == "__main__":
